@@ -144,11 +144,48 @@
             document.getElementById('loginSection').classList.toggle('hidden');
             document.getElementById('registerSection').classList.toggle('hidden');
         }
-                // 🚀 यूज़र को सीधे लॉगिन से होम पेज पर भेजने का पक्का लॉजिक
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault(); // पेज को रीलोड होने से रोकना
-            window.location.href = 'templates_dashboard.html'; // होम पेज का नाम
+                document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    //           
+    const usernameInput = document.querySelector('input[name="mobile"]').value.trim();
+    const passwordInput = document.querySelector('input[name="password"]')?.value.trim() || 
+                          document.querySelector('input[type="password"]').value.trim();
+
+    if (!usernameInput || !passwordInput) {
+        alert("     ");
+        return;
+    }
+
+    try {
+        const response = await fetch("http://127.0.0", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: usernameInput, password: passwordInput })
         });
+
+        const data = await response.json();
+
+        if (data.success) {
+            //        
+            localStorage.setItem("game_username", data.username);
+            localStorage.setItem("game_balance", data.balance);
+
+            if (data.type === "register") {
+                alert(" !       ");
+            } else {
+                alert(" !");
+            }
+            window.location.href = 'templates_dashboard.html';
+        } else {
+            alert(" : " + data.message);
+        }
+    } catch (error) {
+        console.error(" :", error);
+        alert("          app.py  ");
+    }
+});
+
         
     </script>
 </body>
