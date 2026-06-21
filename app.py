@@ -23,7 +23,6 @@ except Exception as e:
 def home():
     return "N&N ALPHA ARENA API SERVER IS RUNNING!"
 
-# 1. यूजर लॉगिन और रजिस्ट्रेशन API
 @app.route('/api/auth', methods=['POST'])
 def user_auth():
     data = request.json
