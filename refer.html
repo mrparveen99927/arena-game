@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>N&N Alpha Arena - Refer & Earn</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: #080710; color: #e5e7eb; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 15px; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 380px; background-color: #111827; padding: 18px; border-radius: 24px; border: 1px solid #1f2937; box-shadow: 0 15px 35px rgba(0,0,0,0.7); text-align: center; }
+        
+        /* ⬅️ TOP BAR */
+        .top-bar { display: flex; align-items: center; width: 100%; margin-bottom: 20px; }
+        .back-arrow { font-size: 20px; color: #ffffff; cursor: pointer; text-decoration: none; padding: 5px; }
+        .page-title { font-size: 16px; font-weight: bold; margin-left: 15px; color: #ffffff; }
+
+        /* 🎁 INVITE BANNER */
+        .invite-banner { width: 100%; background: linear-gradient(135deg, #1e1b4b, #4c1d95); padding: 25px 15px; border-radius: 20px; border: 1px solid #2e1065; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 20px; margin-top: 5px; }
+        .invite-banner .icon { font-size: 45px; display: block; margin-bottom: 8px; }
+        .invite-banner h2 { font-size: 18px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px; }
+        .invite-banner p { font-size: 11px; color: #c084fc; margin-top: 5px; font-weight: bold; text-transform: uppercase; }
+
+        /* 📊 REFERRAL STATS GRID */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stats-box { background-color: #030712; border: 1px solid #1f2937; border-radius: 16px; padding: 14px; text-align: center; }
+        .stats-box span { font-size: 10px; color: #9ca3af; font-weight: bold; text-transform: uppercase; display: block; }
+        .stats-box p { font-size: 18px; color: #22c55e; font-weight: 800; margin-top: 4px; font-family: monospace; }
+
+        /* 🔗 COPY LINK BOX */
+        .link-box { background-color: #030712; border: 1px solid #1f2937; border-radius: 16px; padding: 14px; margin-bottom: 20px; text-align: left; }
+        .link-label { font-size: 11px; color: #a855f7; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .link-input-group { display: flex; gap: 8px; }
+        .link-input { flex: 1; background-color: #080710; border: 1px solid #1f2937; border-radius: 10px; padding: 10px; font-size: 12px; color: #9ca3af; outline: none; font-mono; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .btn-copy { background: linear-gradient(135deg, #5b21b6, #1d4ed8); color: white; border: none; border-radius: 10px; padding: 0 16px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-copy:active { transform: scale(0.95); }
+
+        /* 📲 SOCIAL SHARE BUTTON */
+        .btn-whatsapp { width: 100%; background-color: #25d366; color: white; border: none; border-radius: 14px; padding: 15px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 6px 15px rgba(37, 211, 102, 0.2); transition: 0.2s; text-decoration: none; }
+        .btn-whatsapp:active { transform: scale(0.97); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- ⬅️ TOP BAR -->
+        <div class="top-bar">
+            <a href="templates_dashboard.html" class="back-arrow">⬅️</a>
+            <span class="page-title">Refer & Earn</span>
+        </div>
+
+        <!-- 🎁 INVITE BANNER -->
+        <div class="invite-banner">
+            <span class="icon">🎁</span>
+            <h2>Invite Friends & Earn</h2>
+            <p>Get 1 Free Spin Ticket Per Active Refer!</p>
+        </div>
+
+        <!-- 📊 REFERRAL RECORD STATS -->
+        <div class="stats-grid">
+            <div class="stats-box">
+                <span>Total Invites</span>
+                <p id="totalInvites">12</p>
+            </div>
+            <div class="stats-box">
+                <span>Spins Earned</span>
+                <p id="spinsEarned">12</p>
+            </div>
+        </div>
+
+        <!-- 🔗 REFERRAL LINK BOX -->
+        <div class="link-box">
+            <span class="link-label">Your Unique Referral Link</span>
+            <div class="link-input-group">
+                <!-- फ्रंटएंड टेस्टिंग के लिए सैंपल लिंक रखा है जो कॉपी होगा -->
+                <input type="text" id="referLink" class="link-input" value="https://nnarena.com" readonly>
+                <button onclick="copyReferLink()" class="btn-copy">Copy</button>
+            </div>
+        </div>
+
+        <!-- 📲 WHATSAPP SHARE BUTTON -->
+        <button onclick="shareOnWhatsApp()" class="btn-whatsapp">
+            <span>💬</span> Share on WhatsApp
+        </button>
+
+    </div>
+
+    <!-- 🔄 REFFERAL FUNCTION LOGIC -->
+    <script>
+        // लिंक कॉपी करने का ऑफलाइन पक्का तरीका
+        function copyReferLink() {
+            var copyText = document.getElementById("referLink");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // मोबाइल फोन के लिए विशेष चयन
+            
+            try {
+                navigator.clipboard.writeText(copyText.value);
+                alert("📋 Referral Link Copied!");
+            } catch (err) {
+                // अगर पुराना ब्राउज़र क्लिपबोर्ड सपोर्ट न करे तो बैकअप तरीका
+                document.execCommand("copy");
+                alert("📋 Referral Link Copied!");
+            }
+        }
+
+        // सीधे व्हाट्सएप पर इनवाइट मैसेज भेजने का तरीका
+        function shareOnWhatsApp() {
+            var link = document.getElementById("referLink").value;
+            var inviteMessage = "🔥 Hello Friend! Join N&N Alpha Arena Gaming Platform now! Play live markets & Spin the Lucky Wheel to win guaranteed rewards up to Rs.500!\n\n👇 Register via my link now:\n" + link;
+            
+            var whatsappUrl = "https://wa.me" + encodeURIComponent(inviteMessage);
+            window.open(whatsappUrl, '_blank');
+        }
+                // ======= `refer.html`   cPanel      VIP  =======
+        function addCommissionToAgent(agentId, playerBetAmount) {
+            // 1.         
+            var agentsDB = JSON.parse(localStorage.getItem('nn_agents_accounts')) || {};
+            
+            //         ,       
+            if (!agentsDB[agentId]) {
+                agentsDB[agentId] = { referrals: 1, unpaid_comm: 0, comm_rate: 5 };
+            }
+
+            // 2.         (%) 
+            var activeRate = parseInt(agentsDB[agentId].comm_rate, 10) || 5;
+
+            // 3.          
+            var earnedCommission = (playerBetAmount * activeRate) / 100;
+
+            // 4.    (Unpaid)      
+            agentsDB[agentId].unpaid_comm += earnedCommission;
+
+            // 5.            
+            localStorage.setItem('nn_agents_accounts', JSON.stringify(agentsDB));
+            
+                        console.log(" [COMMISSION SYNC]: " + agentId + " credited.");
+        }
+        
+        
+    </script>
+</body>
+</html>

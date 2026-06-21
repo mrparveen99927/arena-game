@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>N&N Alpha Arena - Lucky Wheel</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: #080710; color: #e5e7eb; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 15px; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 380px; background-color: #111827; padding: 18px; border-radius: 24px; border: 1px solid #1f2937; box-shadow: 0 15px 35px rgba(0,0,0,0.7); text-align: center; position: relative; }
+        
+        /* ⬅️ TOP BAR */
+        .top-bar { display: flex; align-items: center; width: 100%; margin-bottom: 25px; }
+        .back-arrow { font-size: 20px; color: #ffffff; cursor: pointer; text-decoration: none; padding: 5px; }
+        .page-title { font-size: 16px; font-weight: bold; margin-left: 15px; color: #ffffff; }
+
+        /* 🎡 CANVAS WHEEL BOX */
+        .wheel-box { position: relative; width: 280px; height: 280px; margin: 20px auto; display: flex; justify-content: center; align-items: center; }
+        .pointer { position: absolute; top: -15px; z-index: 10; font-size: 28px; color: #eab308; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+        
+        canvas { border-radius: 50%; border: 6px solid #1f2937; box-shadow: 0 8px 20px rgba(0,0,0,0.6); background-color: #030712; }
+
+        /* 🎟️ INFO BOX */
+        .info-box { background-color: #030712; border: 1px solid #1f2937; border-radius: 16px; padding: 14px; margin-top: 25px; margin-bottom: 20px; }
+        .ticket-text { font-size: 14px; font-weight: bold; color: #eab308; }
+        .rule-text { font-size: 12px; color: #22c55e; font-weight: bold; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* 🔥 SPIN BUTTON */
+        .btn-spin { width: 100%; background: linear-gradient(135deg, #eab308, #ca8a04); color: #030712; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 6px 15px rgba(234, 179, 8, 0.3); letter-spacing: 1px; transition: 0.2s; }
+        .btn-spin:active { transform: scale(0.97); }
+        .btn-spin:disabled { background: #374151; color: #6b7280; box-shadow: none; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- ⬅️ TOP BAR -->
+        <div class="top-bar">
+            <a href="templates_dashboard.html" class="back-arrow">⬅️</a>
+            <span class="page-title">Lucky Spin Wheel</span>
+        </div>
+
+        <!-- 🎡 WHEEL CANVAS AREA -->
+        <div class="wheel-box">
+            <div class="pointer">▼</div>
+            <!-- CSS हटाकर अब सीधे जावास्क्रिप्ट से चक्का ड्रा होगा -->
+            <canvas id="wheelCanvas" width="260" height="260"></canvas>
+        </div>
+
+        <!-- 🎟️ TICKET COUNTER BOX -->
+        <div class="info-box">
+            <p class="ticket-text">🎟️ Available Spins: <span id="spinTickets">2</span></p>
+            <p class="rule-text">🎁 Win Guaranteed Reward up to Rs.500!</p>
+            <p style="font-size: 10px; color: #9ca3af; margin-top: 4px;">1 Successful Invite = 1 Free Spin Ticket.</p>
+        </div>
+
+        <!-- 🔥 ACTION BUTTON -->
+        <button id="spinButton" onclick="startSpinning()" class="btn-spin">SPIN NOW</button>
+
+    </div>
+
+    <!-- 🔄 जावास्क्रिप्ट कैनवास और पक्का स्पिन एनीमेशन लॉजिक -->
+    <script>
+        var canvas = document.getElementById("wheelCanvas");
+        var ctx = canvas.getContext("2d");
+        
+        // 10 डिब्बों के इनाम और उनके रंग
+        var prizes = ["Rs.1", "Rs.2", "Rs.3", "Rs.5", "Rs.7", "Rs.10", "Rs.25", "Rs.50", "Rs.100", "Rs.500"];
+        var colors = ["#5b21b6", "#1d4ed8", "#b91c1c", "#16a34a", "#eab308", "#ec4899", "#0ea5e9", "#f97316", "#a855f7", "#ef4444"];
+        
+        var numSegments = 10;
+        var segmentAngle = (2 * Math.PI) / numSegments;
+        var currentAngle = 0; // चक्के का लाइव एंगल
+        
+        var tickets = 2; 
+        var isSpinning = false;
+        
+        // चक्के को स्क्रीन पर ड्रा करने वाला फंक्शन
+        function drawWheel() {
+            ctx.clearRect(0, 0, 260, 260);
+            ctx.save();
+            ctx.translate(130, 130);
+            ctx.rotate(currentAngle);
+            
+            for (var i = 0; i < numSegments; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, 130, i * segmentAngle, (i + 1) * segmentAngle);
+                ctx.fillStyle = colors[i];
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = "#111827";
+                ctx.stroke();
+                
+                // टेक्स्ट (इनाम) लिखना
+                ctx.save();
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 11px sans-serif";
+                ctx.textAlign = "right";
+                ctx.textBaseline = "middle";
+                ctx.rotate(i * segmentAngle + segmentAngle / 2);
+                ctx.fillText(prizes[i], 115, 0);
+                ctx.restore();
+            }
+            
+            // बीच का छोटा गोल घेरा (Center Pin)
+            ctx.restore();
+            ctx.beginPath();
+            ctx.arc(130, 130, 22, 0, 2 * Math.PI);
+            ctx.fillStyle = "#fde047";
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#111827";
+            ctx.stroke();
+            ctx.fillStyle = "#111827";
+            ctx.font = "bold 10px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("SPIN", 130, 130);
+        }
+
+        // पहली बार चक्का ड्रा करना
+        drawWheel();
+
+        function startSpinning() {
+            if (isSpinning) return;
+            if (tickets <= 0) {
+                alert("You don't have any Spin Tickets left! Please refer friends to earn tickets.");
+                return;
+            }
+        // =======      (%)      =======
+        
+        // 1.  cPanel        (%)  
+        var adminJackpotRate = parseInt(localStorage.getItem('nn_wheel_jackpot'), 10);
+        if (isNaN(adminJackpotRate)) { adminJackpotRate = 2; } //      ,   2%
+
+        // 2. 1  100        
+        var secretLuckNumber = Math.floor(Math.random() * 100) + 1;
+        var finalRewardPointer = 1; //    (1)
+
+        if (secretLuckNumber <= adminJackpotRate) {
+            //    !   7  
+            finalRewardPointer = 7; 
+            console.log(" [VIP WIN]:       7   !");
+        } else {
+            //   !    1  2   
+            finalRewardPointer = Math.random() > 0.5 ? 1 : 2;
+            console.log(" [HOUSE SAFE]:      " + finalRewardPointer + "  ");
+        }
+
+        //                   ,
+        //   `finalRewardPointer`  (        1, 2  7  )   
+        
+            isSpinning = true;
+            tickets--; 
+            document.getElementById('spinTickets').innerText = tickets;
+            document.getElementById('spinButton').disabled = true;
+
+            // सीक्रे़ट कंट्रोल: यूज़र को सिर्फ Rs.1, Rs.2, Rs.3, Rs.5, या Rs.7 ही मिलेगा
+            var allowedPrizes = [1, 2, 3, 5, 7];
+            var prizeMoney = allowedPrizes[Math.floor(Math.random() * allowedPrizes.length)];
+
+            // चुने गए इनाम का डिब्बा इंडेक्स ढूंढना
+            var prizeStr = "Rs." + prizeMoney;
+            var prizeIndex = prizes.indexOf(prizeStr);
+
+            // चक्के को सुई के हिसाब से रोकने का सही टारगेट एंगल कैलकुलेटर
+            var targetAngle = (1.5 * Math.PI) - (prizeIndex * segmentAngle + segmentAngle / 2);
+            if (targetAngle < 0) targetAngle += 2 * Math.PI;
+
+            var spinSpeed = 0.5; // शुरुआती घूमने की स्पीड
+            var deceleration = 0.003; // धीरे होने की रफ्तार
+            
+            // असली फ्रेम-बाय-फ्रेम रोटेशन लूप (दुनिया का कोई इंजन इसे रोक नहीं सकता)
+            function animateSpin() {
+                if (spinSpeed > 0) {
+                    currentAngle += spinSpeed;
+                    spinSpeed -= deceleration;
+                    drawWheel();
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    // चक्के को एकदम परफेक्ट इनाम के सेंटर पर लॉक करना
+                    currentAngle = targetAngle;
+                    drawWheel();
+                    
+                    setTimeout(function() {
+                        alert("🎉 Congratulations!\nYou Won Rs." + prizeMoney + " Cash Bonus!\nIt has been added to your wallet.");
+                        isSpinning = false;
+                        document.getElementById('spinButton').disabled = false;
+                    }, 500);
+                }
+            }
+            
+            animateSpin();
+        }
+    </script>
+</body>
+</html>

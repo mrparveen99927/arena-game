@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>N&N Alpha Arena - Game Zone</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        html, body { background-color: #080710; color: #e5e7eb; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+        body { display: flex; justify-content: center; align-items: flex-start; }
+        .app-container { width: 100%; max-width: 380px; height: 100vh; background-color: #111827; padding: 12px; padding-bottom: 190px; overflow-y: scroll; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 5px 0 10px 0; }
+        .top-left { display: flex; align-items: center; }
+        .back-arrow { font-size: 20px; color: #ffffff; cursor: pointer; text-decoration: none; padding: 5px; }
+        .page-title { font-size: 15px; font-weight: bold; margin-left: 10px; color: #ffffff; }
+        .balance-strip { background-color: #030712; padding: 6px 12px; border-radius: 10px; border: 1px solid #1f2937; font-size: 12px; color: #22c55e; font-weight: bold; }
+        .chart-section { background-color: #030712; border: 1px solid #1f2937; border-radius: 16px; padding: 12px; margin-bottom: 15px; text-align: left; }
+        .chart-title { font-size: 11px; color: #a855f7; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+        .chart-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px dashed #1f2937; }
+        .chart-row:last-child { border: none; }
+        .chart-date { color: #9ca3af; }
+        .chart-res { color: #eab308; font-weight: 800; font-family: monospace; }
+        .quick-select-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 15px; }
+        .quick-btn { background-color: #1f2937; border: 1px solid #374151; color: #ffffff; border-radius: 8px; padding: 8px 2px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        .grid-title { font-size: 11px; color: #9ca3af; text-transform: uppercase; margin-bottom: 8px; text-align: left; font-weight: bold; }
+        .matrix-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; background-color: #030712; padding: 10px; border-radius: 18px; border: 1px solid #1f2937; }
+        .num-btn { background-color: #111827; color: #e5e7eb; border: 1px solid #1f2937; border-radius: 10px; padding: 12px 0; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .num-btn.selected-num { background: linear-gradient(135deg, #eab308, #ca8a04); color: #030712; border-color: #fde047; }
+        .bet-panel { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 380px; background-color: #030712; border-top: 2px solid #1f2937; padding: 12px 15px; border-radius: 20px 20px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.9); z-index: 1000; text-align: left; }
+        .selected-list-bar { font-size: 11px; color: #9ca3af; background-color: #080710; padding: 6px 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #1f2937; max-height: 38px; overflow-y: auto; word-break: break-all; }
+        .calc-info-row { display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        .total-highlight { color: #22c55e; font-size: 14px; font-weight: 800; }
+        .input-row { display: flex; gap: 10px; width: 100%; }
+        .bet-input { flex: 1; background-color: #080710; border: 1px solid #1f2937; border-radius: 12px; padding: 12px; font-size: 14px; color: #ffffff; outline: none; text-align: center; font-weight: bold; }
+        .btn-confirm { background: linear-gradient(135deg, #22c55e, #15803d); color: white; border: none; border-radius: 12px; padding: 0 18px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="top-bar">
+            <div class="top-left"><a href="templates_dashboard.html" class="back-arrow">⬅️</a><span class="page-title">Faridabad Arena (Class A)</span></div>
+            <div class="balance-strip">💎 <span id="currentWallet">1250</span> Coins</div>
+        </div>
+        <div class="chart-section">
+            <p class="chart-title">📊 Faridabad Past Chart</p>
+            <div class="chart-row"><span class="chart-date">20 Jun 2026</span><span class="chart-res">Result: 45</span></div>
+            <div class="chart-row"><span class="chart-date">19 Jun 2026</span><span class="chart-res">Result: 78</span></div>
+            <div class="chart-row"><span class="chart-date">18 Jun 2026</span><span class="chart-res">Result: 12</span></div>
+        </div>
+        <div class="quick-select-row">
+            <button class="quick-btn" onclick="quickSelect('all')">Select All</button>
+            <button class="quick-btn" onclick="quickSelect('even')">Select Even</button>
+            <button class="quick-btn" onclick="quickSelect('odd')">Select Odd</button>
+            <button class="quick-btn" onclick="clearAll()" style="color:#ef4444;">Clear All</button>
+        </div>
+        <p class="grid-title">Tap to select Multiple Numbers:</p>
+        <div id="matrixGrid" class="matrix-grid"></div>
+    </div>
+    <div class="bet-panel">
+        <div class="selected-list-bar" id="selectedDisplay">Selected Numbers: None</div>
+        <div class="calc-info-row">
+            <div>Selected: <span id="selectedCount" style="color:#a855f7;">0</span> Numbers</div>
+            <div>Total Bet: <span class="total-highlight">₹<span id="totalBet">0</span></span></div>
+        </div>
+        <div class="input-row">
+            <input type="number" id="coinInput" oninput="calcTotal()" placeholder="Per No: ₹5 - ₹100" min="5" max="100" class="bet-input">
+            <button onclick="confirmBet()" class="btn-confirm">Confirm Bet</button>
+        </div>
+    </div>
+    <script>
+            // =======  1:          =======
+        function syncAdminLiveResult() {
+            //         
+            var liveData = JSON.parse(localStorage.getItem('nn_current_game'));
+            
+            if (liveData && liveData.name && liveData.number) {
+                var marketName = liveData.name.toUpperCase(); // : FARIDABAD, GALI
+                var winNum = liveData.number;
+
+                //  game.html       
+                // (            )
+                var marketBoxId = "";
+                if (marketName.indexOf("FARIDABAD") > -1) marketBoxId = "res-fabad";
+                else if (marketName.indexOf("GHAZIABAD") > -1) marketBoxId = "res-gzbad";
+                else if (marketName.indexOf("GALI") > -1) marketBoxId = "res-gali";
+                else if (marketName.indexOf("DISAWER") > -1) marketBoxId = "res-dsawr";
+
+                //         ,    
+                var targetBox = document.getElementById(marketBoxId);
+                if (targetBox) {
+                    targetBox.innerText = winNum;
+                    targetBox.style.color = "#10b981"; //       
+                    targetBox.style.fontWeight = "900";
+                }
+            }
+        }
+
+        //  3        - 
+        setInterval(syncAdminLiveResult, 3000);
+                // =======  2: 95x       =======
+        var lastCheckedMarketResult = ""; // -          
+
+        function checkAndDistribute95xProfit() {
+            var liveData = JSON.parse(localStorage.getItem('nn_current_game'));
+            if (!liveData || !liveData.name || !liveData.number) return;
+
+            var marketKey = liveData.name.toUpperCase();
+            var winningNum = parseInt(liveData.number, 10);
+            
+            //     (: FARIDABAD_56)           
+            var currentResultKey = marketKey + "_" + winningNum;
+            if (lastCheckedMarketResult === currentResultKey) return; 
+
+            //       (    'current_player_id'    )
+            //        ,        'User_8821'   
+            var currentPlayer = localStorage.getItem('current_player_id') || "User_8821";
+
+            //       
+            var allBets = JSON.parse(localStorage.getItem('nn_user_bets')) || [];
+            var playerAccounts = JSON.parse(localStorage.getItem('nn_users_accounts')) || {};
+
+            var totalWinAmount = 0;
+            var wonAnyBet = false;
+
+            //           
+            for (var i = 0; i < allBets.length; i++) {
+                var bet = allBets[i];
+                //          ,         ?
+                if (bet.user === currentPlayer && bet.market.toUpperCase() === marketKey && parseInt(bet.number, 10) === winningNum) {
+                    var winReward = bet.amount * 95; // 95   
+                    totalWinAmount += winReward;
+                    wonAnyBet = true;
+                }
+            }
+
+            //     ,       
+            if (wonAnyBet && totalWinAmount > 0) {
+                if (playerAccounts[currentPlayer]) {
+                    playerAccounts[currentPlayer].balance += totalWinAmount;
+                } else {
+                    playerAccounts[currentPlayer] = { balance: totalWinAmount, status: "ACTIVE" };
+                }
+
+                //     
+                localStorage.setItem('nn_users_accounts', JSON.stringify(playerAccounts));
+                
+                //           ( game.html  'player-balance'  )
+                var balanceBox = document.getElementById('player-balance');
+                if (balanceBox) {
+                    balanceBox.innerText = "" + playerAccounts[currentPlayer].balance;
+                }
+
+                //    - 
+                alert(" WINNER OUT! \n  ! " + marketKey + "    [" + winningNum + "]   \n95x    " + totalWinAmount + "        !");
+            }
+
+            //            
+            lastCheckedMarketResult = currentResultKey;
+        }
+
+        //  3     -  
+        setInterval(checkAndDistribute95xProfit, 3000);
+        
+        var selectedArr = []; var walletCoins = 1250;
+        var grid = document.getElementById("matrixGrid");
+        for (var i = 1; i <= 100; i++) {
+            var btn = document.createElement("button"); btn.className = "num-btn"; btn.innerText = i; btn.id = "nBtn_" + i;
+            btn.setAttribute("onclick", "toggleNum(" + i + ")"); grid.appendChild(btn);
+        }
+        function toggleNum(num) {
+            var btn = document.getElementById("nBtn_" + num); var idx = selectedArr.indexOf(num);
+            if (idx === -1) { selectedArr.push(num); btn.classList.add("selected-num"); }
+            else { selectedArr.splice(idx, 1); btn.classList.remove("selected-num"); }
+            selectedArr.sort(function(a,b){return a-b;}); updateUI();
+        }
+        function quickSelect(type) {
+            clearAll();
+            for (var i = 1; i <= 100; i++) {
+                var btn = document.getElementById("nBtn_" + i);
+                if (type=='all' || (type=='even' && i%2===0) || (type=='odd' && i%2!==0)) { selectedArr.push(i); btn.classList.add("selected-num"); }
+            }
+            updateUI();
+        }
+        function clearAll() {
+            selectedArr = []; for (var i = 1; i <= 100; i++) { document.getElementById("nBtn_" + i).classList.remove("selected-num"); }
+            updateUI();
+        }
+        function updateUI() {
+            document.getElementById("selectedCount").innerText = selectedArr.length;
+            document.getElementById("selectedDisplay").innerText = (selectedArr.length === 0) ? "Selected Numbers: None" : "Selected Numbers: " + selectedArr.join(", ");
+            calcTotal();
+        }
+        function calcTotal() {
+            var amt = document.getElementById("coinInput").value; var txt = document.getElementById("totalBet");
+            if (!amt || amt <= 0 || selectedArr.length === 0) { txt.innerText = "0"; return 0; }
+            var total = selectedArr.length * parseInt(amt); txt.innerText = total; return total;
+        }
+        function confirmBet() {
+            var total = calcTotal(); var amt = parseInt(document.getElementById("coinInput").value);
+            if (selectedArr.length === 0) { alert("❌ Select at least one number!"); return; }
+            if (!amt || isNaN(amt)) { alert("❌ Enter valid coins per number!"); return; }
+            
+            // 🛡️ प्रति नंबर दांव की सीमा: ₹5 से ₹100
+            if (amt < 5) { alert("❌ Minimum bet amount per number is ₹5!"); return; }
+            if (amt > 100) { alert("❌ Maximum bet amount per number is ₹100!"); return; }
+            
+            if (total > walletCoins) { alert("❌ Insufficient Balance! Total bet is ₹" + total + " but you have 💎" + walletCoins + " coins."); return; }
+            walletCoins -= total; document.getElementById("currentWallet").innerText = walletCoins;
+            alert("✅ Bet Accepted!\n\nNumbers Bet: " + selectedArr.length + "\nAmt Per Number: ₹" + amt + "\nTotal Deducted: ₹" + total);
+            document.getElementById("coinInput").value = ""; clearAll();
+        }
+    </script>
+</body>
+</html>

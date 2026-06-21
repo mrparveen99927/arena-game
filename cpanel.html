@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N&N ALPHA ARENA - Admin Engine</title>
+    <style>
+        /* आपके गेम स्क्रीनशॉट की सटीक डार्क नाइट-ब्लू थीम और कोर CSS */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #0b111e; color: #f9fafb; font-size: 14px; padding-bottom: 30px; }
+        
+        /* प्रीमियम हेडर डिजाइन */
+        header { background-color: #111a2e; padding: 15px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #1e293b; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: space-between; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .menu-btn { background: none; border: none; color: #a855f7; font-size: 24px; cursor: pointer; padding: 0 5px; display: block; z-index: 110; }
+        .logo-box { width: 32px; height: 32px; background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 11px; box-shadow: 0 2px 8px rgba(168,85,247,0.4); }
+        .brand-title { font-size: 14px; font-weight: 900; background: linear-gradient(90deg, #c084fc, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .admin-badge { background-color: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; }
+
+        /* असली स्लाइडिंग ऐप मेनू (Drawer) */
+        .drawer-menu { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background-color: #0e1626; border-right: 1px solid #2e3b55; box-shadow: 5px 0 25px rgba(0,0,0,0.5); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 200; display: flex; flex-direction: column; }
+        .drawer-menu.open { transform: translateX(0); }
+        .drawer-header { padding: 20px 15px; background-color: #111a2e; border-bottom: 1px solid #2e3b55; display: flex; justify-content: space-between; align-items: center; }
+        .drawer-title { font-size: 11px; font-weight: bold; color: #a855f7; letter-spacing: 1px; }
+        .close-btn { background: none; border: none; color: #9ca3af; font-size: 18px; cursor: pointer; }
+        
+        /* मेनू बटन्स - बिना किसी सफ़ेद पट्टी के, प्रोफेशनल लुक */
+        .menu-items-list { flex: 1; overflow-y: auto; padding: 15px 10px; display: flex; flex-direction: column; gap: 4px; }
+        .menu-item { width: 100%; text-align: left; background: none; border: none; padding: 12px 15px; border-radius: 8px; color: #9ca3af; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+        .menu-item:hover { background-color: #172033; color: #fff; }
+        .menu-item.active { background-color: #172033; border-left: 4px solid #a855f7; color: #fff; border-radius: 0 8px 8px 0; }
+        .backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); z-index: 150; display: none; }
+        .backdrop.show { display: block; }
+
+        /* मुख्य कंटेनर और प्रीमियम कार्ड्स लेआउट */
+        main { padding: 15px; max-width: 480px; margin: 0 auto; }
+        .section-title { font-size: 12px; font-weight: bold; color: #9ca3af; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .count-tag { font-size: 10px; background-color: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); padding: 2px 6px; border-radius: 4px; }
+        
+        .game-card { background-color: #172033; border: 1px solid #2e3b55; border-left: 4px solid #a855f7; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 15px; }
+        .game-card-blue { border-left-color: #3b82f6; }
+        
+        /* ग्रिड स्टैट्स */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px; }
+        .stat-box { background-color: #172033; border: 1px solid #2e3b55; border-radius: 12px; padding: 12px; }
+        .stat-label { font-size: 9px; font-weight: bold; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-val { font-size: 18px; font-weight: bold; font-family: monospace; margin-top: 4px; }
+        .text-green { color: #10b981; }
+        .text-yellow { color: #f59e0b; }
+
+        /* फॉर्म और इनपुट फील्ड्स नियंत्रण */
+        .input-group { margin-bottom: 15px; }
+        .input-label { display: block; font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+        .form-select, .form-input { width: 100%; background-color: #0b111e; border: 1px solid #2e3b55; border-radius: 8px; padding: 12px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
+        .form-select:focus, .form-input:focus { border-color: #a855f7; }
+        .form-input.number-win { font-size: 24px; font-weight: bold; text-align: center; color: #10b981; font-family: monospace; }
+        
+        /* ऐक्शन बटन्स डिजाइन */
+        .btn-primary { width: 100%; background-color: #a855f7; border: none; color: #fff; font-size: 12px; font-weight: bold; padding: 12px; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(168,85,247,0.3); transition: background 0.2s; }
+        .btn-primary:active { transform: scale(0.98); }
+        
+        .flex-row { display: flex; justify-content: space-between; align-items: center; }
+        .row-gap { display: flex; flex-direction: column; gap: 3px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
+        .action-btn { flex: 1; padding: 8px; font-size: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; text-transform: uppercase; }
+        .btn-approve { background-color: #a855f7; color: #fff; }
+        .btn-paid { background-color: #3b82f6; color: #fff; }
+        .btn-reject { background-color: transparent; border: 1px solid #4b5563; color: #d1d5db; }
+
+        /* लाइव स्टेटस प्रीव्यू बॉक्स */
+        .live-preview-box { background-color: rgba(15,23,42,0.6); border: 1px dashed rgba(168,85,247,0.3); padding: 15px; border-radius: 12px; text-align: center; margin-top: 15px; }
+        .live-num-display { font-size: 32px; font-weight: 900; color: #10b981; font-family: monospace; margin: 4px 0; }
+        .status-badge { display: inline-block; background-color: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 4px; }
+
+        /* यूटिलिटी क्लासेस */
+        .hidden { display: none !important; }
+        .list-container { display: flex; flex-direction: column; gap: 10px; }
+        .history-card { background-color: rgba(23,32,51,0.5); border: 1px solid #2e3b55; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+        .no-data { text-align: center; color: #4b5563; font-size: 12px; padding: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <!-- टॉप हेडर बार (लोगो और 3 लाइन्स बटन) -->
+    <header>
+        <div class="header-left">
+            <button onclick="toggleMenu(true)" class="menu-btn">☰</button>
+            <div class="logo-box">N&N</div>
+            <h1 class="brand-title">N&N ALPHA ARENA</h1>
+        </div>
+        <span class="admin-badge">ADMIN ENGINE</span>
+    </header>
+
+    <!-- 3-लाइन्स साइडबार ड्रॉर (मेनू ऑप्शंस) -->
+    <div id="drawer" class="drawer-menu">
+        <div class="drawer-header">
+            <span class="drawer-title">⚙️ SYSTEM CONTROL</span>
+            <button onclick="toggleMenu(false)" class="close-btn">✕</button>
+        </div>
+        <nav class="menu-items-list">
+            <button onclick="viewSection('info')" id="m-info" class="menu-item active">ℹ️ Information Overview</button>
+            <button onclick="viewSection('withdrawal')" id="m-withdrawal" class="menu-item">💸 Withdrawal Requests</button>
+            <button onclick="viewSection('withdrawal-hist')" id="m-withdrawal-hist" class="menu-item">📜 Withdrawal History</button>
+            <button onclick="viewSection('deposit')" id="m-deposit" class="menu-item">📥 Deposit Requests (UTR)</button>
+            <button onclick="viewSection('deposit-hist')" id="m-deposit-hist" class="menu-item">📜 Deposit History</button>
+            <button onclick="viewSection('game-result')" id="m-game-result" class="menu-item">🎯 Declare Game Result</button>
+            <button onclick="viewSection('game-history')" id="m-game-history" class="menu-item">📊 Game Result History</button>
+            <button onclick="viewSection('game-management')" id="m-game-management" class="menu-item">🎮 Game Market Management</button>
+                   <!-- यहाँ से नए एडवांस्ड बटन्स पेस्ट करें -->
+            <button onclick="viewSection('hybrid-markets')" id="m-hybrid-markets" class="menu-item">🎯 Hybrid Market Control</button>
+            <button onclick="viewSection('wheel-secret-set')" id="m-wheel-secret-set" class="menu-item">⚙️ Wheel Secret Settings</button>
+            <button onclick="viewSection('anti-cheat-shield')" id="m-anti-cheat-shield" class="menu-item">🚨 Anti-Cheat & UTR Shield</button>
+             <button onclick="viewSection('user-manage')" id="m-user-manage" class="menu-item">👤 Users Wallet & Ban</button>
+             <button onclick="viewSection('agent-control')" id="m-agent-control" class="menu-item">🤝 Agent Commissions</button>
+             
+</nav>
+    </div>
+    <div id="backdrop" onclick="toggleMenu(false)" class="backdrop"></div>
+
+    <!-- मुख्य कंटेंट एरिया -->
+            <!-- ================= F5: AGENT/PROMOTER COMMISSION CONTROL ================= -->
+        <div id="s-agent-control" class="hidden">
+            <div class="section-title">🤝 AGENT & PROMOTER COMMISSIONS</div>
+            
+            <!-- लाइव एजेंट सर्च बॉक्स कार्ड -->
+            <div class="game-card" style="border-left-color: #3b82f6; margin-bottom: 12px;">
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label class="input-label">एजेंट / प्रमोटर आईडी सर्च करें</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <input type="text" id="search-agent-id" class="form-input" placeholder="जैसे: Agent_007 या Promoter_VIP" style="padding: 8px; font-size: 12px; flex: 1; margin-bottom: 0;">
+                        <button type="button" onclick="searchAgentLedger()" class="action-btn btn-paid" style="flex: 0 0 80px; font-size: 10px; margin-top: 0; border-radius: 8px;">SEARCH</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- डायनामिक एजेंट प्रोफाइल कार्ड (सर्च करने पर लाइव डेटा लोड होगा) -->
+            <div id="agent-profile-result-card" class="game-card hidden" style="border-left-color: #10b981;">
+                <div class="flex-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span id="txt-agent-id-display" style="font-weight: bold; color: #f3f4f6; font-size: 15px;">Agent_007</span>
+                        <p style="font-size: 10px; color: #9ca3af; margin-top: 2px;">रेफ़रल नेटवर्क ओवरव्यू</p>
+                    </div>
+                    <span id="txt-agent-referrals" style="font-size: 9px; color: #fbbf24; font-weight: bold; background: rgba(251,191,36,0.1); padding: 3px 8px; border-radius: 4px;">45 PLAYERS</span>
+                </div>
+
+                <!-- लाइव अनपेड कमीशन डिस्प्ले -->
+                <div style="background: rgba(11,17,30,0.6); border: 1px solid #2e3b55; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+                    <p style="font-size: 9px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">कुल अनपेड कमीशन राशि</p>
+                    <p id="txt-agent-unpaid" style="font-size: 24px; font-weight: bold; color: #10b981; font-family: monospace; margin-top: 2px;">₹1,500</p>
+                </div>
+
+                <!-- कमीशन रेट सेटिंग फॉर्म -->
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label class="input-label">करेंट कमीशन रेट सेट करें (%)</label>
+                    <input type="number" id="agent-comm-rate-input" min="1" max="100" class="form-input" placeholder="जैसे: 5 या 10" style="padding: 10px; font-size: 13px; text-align: center; font-family: monospace; color: #fbbf24; font-weight: bold;">
+                </div>
+
+                <div class="btn-group" style="display: flex; gap: 8px; margin-bottom: 5px;">
+                    <button type="button" onclick="updateAgentCommRate()" class="action-btn btn-approve" style="font-size: 10px; flex: 1; padding: 10px; background-color: #a855f7;">⚙️ Update Rate (%)</button>
+                    <button type="button" onclick="settleAgentCommission()" class="action-btn btn-paid" style="font-size: 10px; flex: 1; padding: 10px; background-color: #3b82f6;">💳 Clear & Pay Dues</button>
+                </div>
+            </div>
+
+            <!-- कोई डेटा न होने पर डिफ़ॉल्ट निर्देश संदेश -->
+            <div id="agent-manage-placeholder" class="game-card" style="text-align: center; color: #6b7280; font-size: 12px; border-left-color: #4b5563; padding: 25px 15px;">
+                🔍 कृपया प्रमोटर की एजेंट आईडी ऊपर बॉक्स में टाइप करके 'SEARCH' बटन दबाएं।
+            </div>
+        </div>
+        
+    <main>
+
+        <!-- S1: INFORMATION OVERVIEW (डैशबोर्ड होमपेज) -->
+        <div id="s-info">
+            <div class="section-title">ℹ️ SYSTEM OVERVIEW</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <p class="stat-label">टोटल यूज़र्स</p>
+                    <p class="stat-val text-yellow">1,240</p>
+                </div>
+                <div class="stat-box">
+                    <p class="stat-label">लाइव एक्टिव बेट्स</p>
+                    <p class="stat-val text-green">₹4,850</p>
+                </div>
+            </div>
+        </div>
+                <!-- S2: WITHDRAWAL REQUESTS -->
+        <div id="s-withdrawal" class="hidden">
+            <div class="section-title">
+                <span>💸 WITHDRAWAL REQUESTS (APPROVAL)</span>
+                <span id="badge-wit-count" class="count-tag">0 Req</span>
+            </div>
+            <div id="render-withdrawal-req" class="list-container"></div>
+        </div>
+
+        <!-- S3: WITHDRAWAL HISTORY -->
+        <div id="s-withdrawal-hist" class="hidden">
+            <div class="section-title">📜 WITHDRAWAL HISTORY (PAID)</div>
+            <div id="render-withdrawal-hist" class="list-container"></div>
+        </div>
+
+        <!-- S4: DEPOSIT REQUESTS -->
+        <div id="s-deposit" class="hidden">
+            <div class="section-title">
+                <span>📥 DEPOSIT UTR REQUESTS</span>
+                <span id="badge-dep-count" class="count-tag">0 Req</span>
+            </div>
+            <div id="render-deposit-req" class="list-container"></div>
+        </div>
+
+        <!-- S5: DEPOSIT HISTORY -->
+        <div id="s-deposit-hist" class="hidden">
+            <div class="section-title">📜 DEPOSIT HISTORY (SUCCESS)</div>
+            <div id="render-deposit-hist" class="list-container"></div>
+        </div>
+
+        <!-- S6: DECLARE GAME RESULT -->
+        <div id="s-game-result" class="hidden">
+            <div class="section-title">🎯 DECLARE GAME RESULT (95X)</div>
+            <div class="game-card">
+                <form id="resultForm" onsubmit="pushMarketResult(event)">
+                    <div class="input-group">
+                        <label class="input-label">मार्केट का नाम और समय चुनें</label>
+                        <select id="sel-market" class="form-select">
+                            <option value="Faridabad">Faridabad (06:00 PM)</option>
+                            <option value="Ghaziabad">Ghaziabad (08:30 PM)</option>
+                            <option value="Gali">Gali (11:30 PM)</option>
+                            <option value="Disawer">Disawer (05:00 AM)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">विजेता नंबर सेट करें (1-100)</label>
+                        <input type="number" id="inp-number" min="1" max="100" required class="form-input number-win" placeholder="00">
+                    </div>
+                    <button type="submit" class="btn-primary">अपडेट करें और लाइव भेजें</button>
+                </form>
+            </div>
+            
+            <div class="live-preview-box">
+                <p style="font-size: 10px; font-weight: bold; color: #9ca3af; letter-spacing: 1px;">वर्तमान लाइव ऐप डेटा प्रीव्यू</p>
+                <p style="font-size: 12px; margin-top: 5px;">मार्केट: <span id="live-m-name" style="color: #fbbf24; font-weight: bold;">Faridabad</span></p>
+                <div id="live-m-num" class="live-num-display">78</div>
+                <span class="status-badge">RESULT OUT</span>
+            </div>
+        </div>
+
+        <!-- S7: GAME RESULT HISTORY -->
+        <div id="s-game-history" class="hidden">
+            <div class="section-title">📊 GAME RESULT HISTORY</div>
+            <div id="render-game-hist" class="list-container"></div>
+        </div>
+
+        <!-- S8: GAME MARKET MANAGEMENT -->
+        <div id="s-game-management" class="hidden">
+            <div class="section-title">🎮 MARKET MANAGEMENT</div>
+            <div class="game-card" style="text-align: center; color: #9ca3af;">
+                यहाँ से मार्केट्स की समय सीमा एवं बेट लिमिट्स कंट्रोल की जा सकती हैं।
+            </div>
+        </div>
+                <!-- ================= F1: HYBRID MARKET CONTROL (4 BOXES WITH DOUBLE MODES) ================= -->
+        <div id="s-hybrid-markets" class="hidden">
+            <div class="section-title">🎯 HYBRID MARKET CONTROLS (DOUBLE MODES)</div>
+            
+            <!-- 1. Faridabad Box -->
+            <div class="game-card" style="border-left-color: #a855f7;">
+                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #f3f4f6;">Faridabad (06:00 PM)</span>
+                    <span id="txt-mode-fabad" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
+                </div>
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
+                    <input type="number" id="num-fabad" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px;">
+                    <button type="button" onclick="toggleMarketMode('fabad', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
+                    <button type="button" onclick="toggleMarketMode('fabad', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
+                </div>
+            </div>
+
+            <!-- 2. Ghaziabad Box -->
+            <div class="game-card" style="border-left-color: #a855f7;">
+                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #f3f4f6;">Ghaziabad (08:30 PM)</span>
+                    <span id="txt-mode-gzbad" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
+                </div>
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
+                    <input type="number" id="num-gzbad" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px;">
+                    <button type="button" onclick="toggleMarketMode('gzbad', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
+                    <button type="button" onclick="toggleMarketMode('gzbad', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
+                </div>
+            </div>
+
+            <!-- 3. Gali Box -->
+            <div class="game-card" style="border-left-color: #a855f7;">
+                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #f3f4f6;">Gali (11:30 PM)</span>
+                    <span id="txt-mode-gali" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
+                </div>
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
+                    <input type="number" id="num-gali" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px;">
+                    <button type="button" onclick="toggleMarketMode('gali', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
+                    <button type="button" onclick="toggleMarketMode('gali', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
+                </div>
+            </div>
+
+            <!-- 4. Disawer Box -->
+            <div class="game-card" style="border-left-color: #a855f7;">
+                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; color: #f3f4f6;">Disawer (05:00 AM)</span>
+                    <span id="txt-mode-dsawr" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
+                </div>
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
+                    <input type="number" id="num-dsawr" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px;">
+                    <button type="button" onclick="toggleMarketMode('dsawr', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
+                    <button type="button" onclick="toggleMarketMode('dsawr', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= F2: WHEEL SECRET REPAIR SETTINGS ================= -->
+        <div id="s-wheel-secret-set" class="hidden">
+            <div class="section-title">⚙️ WHEEL REWARD CONTROL (₹1 - ₹7 LOGIC)</div>
+            <div class="game-card" style="border-left-color: #fbbf24;">
+                <p style="font-size: 11px; color: #9ca3af; margin-bottom: 15px; line-height: 1.5;">यहाँ से आप तय कर सकते हैं कि पहिया स्पिन होने पर जैकपॉट (₹7) कितने प्रतिशत चांस पर रुकेगा।</p>
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label class="input-label">₹7 जैकपॉट चांस (0% से 100%)</label>
+                    <input type="number" id="wheel-jackpot-rate" min="0" max="100" class="form-input" value="2" style="font-family: monospace; font-size: 16px; font-weight: bold; color: #fbbf24; text-align: center;">
+                </div>
+                <button type="button" onclick="saveWheelSettings()" class="btn-primary" style="background-color: #d97706; box-shadow: 0 4px 12px rgba(217,119,6,0.3);">Save Wheel Probability</button>
+            </div>
+        </div>
+
+        <!-- ================= F3: ANTI-CHEAT & UTR SHIELD ================= -->
+        <div id="s-anti-cheat-shield" class="hidden">
+            <div class="section-title">🚨 ANTI-CHEAT & UTR SHIELD</div>
+            <div class="game-card" style="border-left-color: #ef4444; margin-bottom: 12px;">
+                <div class="flex-row">
+                    <span style="font-weight: bold; color: #f3f4f6;">Fake UTR Protection</span>
+                    <span style="font-size: 9px; color: #ef4444; font-weight: bold; background: rgba(239,68,68,0.1); padding: 2px 6px; border-radius: 4px;">ACTIVE</span>
+                </div>
+                <p style="font-size: 11px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">सिस्टम पुराने और डुप्लीकेट UTR नंबर डालने वाले यूज़र्स को ऑटोमैटिक रिजेक्ट लिस्ट में डाल रहा है।</p>
+            </div>
+            <div class="game-card" style="border-left-color: #f59e0b;">
+                <div class="flex-row">
+                    <span style="font-weight: bold; color: #f3f4f6;">Abnormal Bets Trigger</span>
+                    <span style="font-size: 9px; color: #f59e0b; font-weight: bold; background: rgba(245,158,11,0.1); padding: 2px 6px; border-radius: 4px;">MONITORING</span>
+                </div>
+                <p style="font-size: 11px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">एक साथ 80 से अधिक नंबर चुनने वाले संदिग्ध खिलाड़ियों की आईडी यहाँ बैन करने के लिए फ्लैग होगी।</p>
+            </div>
+        </div>
+                <!-- ================= F4: USER WALLET & BAN SYSTEM (ADVANCED CONTROLS) ================= -->
+        <div id="s-user-manage" class="hidden">
+            <div class="section-title">👤 USER WALLET & BAN SYSTEM</div>
+            
+            <!-- लाइव सर्च बॉक्स कार्ड -->
+            <div class="game-card" style="border-left-color: #3b82f6; margin-bottom: 12px;">
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <label class="input-label">खिलाड़ी की यूजर आईडी सर्च करें</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px;">
+                        <input type="text" id="search-user-id" class="form-input" placeholder="जैसे: User_8821 या User_4092" style="padding: 8px; font-size: 12px; flex: 1; margin-bottom: 0;">
+                        <button type="button" onclick="searchUserWallet()" class="action-btn btn-paid" style="flex: 0 0 80px; font-size: 10px; margin-top: 0; border-radius: 8px;">SEARCH</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- डायनामिक यूजर प्रोफाइल कार्ड (सर्च करने पर यहाँ लाइव डेटा लोड होगा) -->
+            <div id="user-profile-result-card" class="game-card hidden" style="border-left-color: #fbbf24;">
+                <div class="flex-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span id="txt-manage-username" style="font-weight: bold; color: #f3f4f6; font-size: 15px;">User_8821</span>
+                        <p style="font-size: 10px; color: #9ca3af; margin-top: 2px;">खिलाड़ी का लाइव खाता</p>
+                    </div>
+                    <span id="txt-manage-status" style="font-size: 9px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;">STATUS: ACTIVE</span>
+                </div>
+
+                <!-- लाइव वॉलेट बैलेंस डिस्प्ले -->
+                <div style="background: rgba(11,17,30,0.6); border: 1px solid #2e3b55; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+                    <p style="font-size: 9px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">करंट वॉलेट बैलेंस</p>
+                    <p id="txt-manage-balance" style="font-size: 24px; font-weight: bold; color: #fbbf24; font-family: monospace; margin-top: 2px;">₹1,000</p>
+                </div>
+
+                <!-- एडमिन के 3 सुपर कंट्रोल्स (ऐक्शन फॉर्म) -->
+                <div class="input-group" style="margin-bottom: 12px;">
+                    <label class="input-label">अमाउंट दर्ज करें (₹)</label>
+                    <input type="number" id="manage-amt-input" min="1" class="form-input" placeholder="₹ राशि यहाँ टाइप करें" style="padding: 10px; font-size: 13px; text-align: center;">
+                </div>
+
+                <div class="btn-group" style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <button type="button" onclick="modifyUserWallet('ADD')" class="action-btn btn-approve" style="font-size: 10px; flex: 1; padding: 10px; background-color: #10b981;">➕ Add Money</button>
+                    <button type="button" onclick="modifyUserWallet('DEDUCT')" class="action-btn btn-reject" style="font-size: 10px; flex: 1; padding: 10px; border-color: #ef4444; color: #ef4444;">➖ Deduct Money</button>
+                </div>
+
+                <button type="button" id="btn-ban-toggle" onclick="toggleUserBanStatus()" class="btn-primary" style="background-color: #ef4444; box-shadow: 0 4px 12px rgba(239,68,68,0.2); font-size: 10px; padding: 10px; width: 100%; margin-top: 5px;">🚫 Permanent BAN Player</button>
+            </div>
+
+            <!-- कोई डेटा न होने पर डिफ़ॉल्ट निर्देश संदेश -->
+            <div id="user-manage-placeholder" class="game-card" style="text-align: center; color: #6b7280; font-size: 12px; border-left-color: #4b5563; padding: 25px 15px;">
+                🔍 कृपया खिलाड़ी की यूजर आईडी ऊपर बॉक्स में टाइप करके 'SEARCH' बटन दबाएं।
+            </div>
+        </div>
+        
+    </main>
+        <!-- ऑफ़लाइन इंजन स्क्रिप्ट (LocalStorage संचालित) -->
+    <script>
+        // लोकल डेटाबेस इनिशियलाइज़ेशन
+        if (!localStorage.getItem('nn_engine_init')) {
+            localStorage.setItem('nn_live_deps', JSON.stringify([
+                { id: 401, user: "User_4092", amount: 500, utr: "412345678901" },
+                { id: 402, user: "User_8821", amount: 1000, utr: "498765432109" }
+            ]));
+            localStorage.setItem('nn_hist_deps', JSON.stringify([
+                { user: "User_112", amount: 2500, utr: "466778899001", time: "11:20 AM" }
+            ]));
+            localStorage.setItem('nn_live_wits', JSON.stringify([
+                { id: 501, user: "User_3021", amount: 1500, upi: "user3021@apl" }
+            ]));
+            localStorage.setItem('nn_hist_wits', JSON.stringify([
+                { user: "User_990", amount: 800, upi: "u990@ybl", time: "10:05 AM" }
+            ]));
+            localStorage.setItem('nn_current_game', JSON.stringify({ name: "Faridabad", number: "78" }));
+            localStorage.setItem('nn_game_history_list', JSON.stringify([
+                { name: "Ghaziabad", number: "45", time: "Yesterday" }
+            ]));
+                        // --- ऑटोमैटिक लोड कैलकुलेटर के लिए नकली बेट्स डेटा ---
+            localStorage.setItem('nn_user_bets', JSON.stringify([
+                { user: "User_1", number: 45, amount: 100 },
+                { user: "User_2", number: 45, amount: 50 },
+                { user: "User_3", number: 78, amount: 200 },
+                { user: "User_4", number: 12, amount: 20 }
+            ]));
+  
+            localStorage.setItem('nn_engine_init', 'true');
+        }
+
+        // साइडबार विजिबिलिटी कंट्रोल (यह फंक्शन 3 लाइन्स को चालू करेगा)
+        function toggleMenu(show) {
+            const drawer = document.getElementById('drawer');
+            const backdrop = document.getElementById('backdrop');
+            if(show) {
+                drawer.classList.add('open');
+                backdrop.classList.add('show');
+            } else {
+                drawer.classList.remove('open');
+                backdrop.classList.remove('show');
+            }
+        }
+
+        // स्पेसिफिक सेक्शन पर स्विच करना
+            
+        function viewSection(id) {
+                const list = ['info', 'withdrawal', 'withdrawal-hist', 'deposit', 'deposit-hist', 'game-result', 'game-history', 'game-management', 'hybrid-markets', 'wheel-secret-set', 'anti-cheat-shield', 'agent-control'];
+            list.forEach(item => {
+                document.getElementById('s-' + item).classList.add('hidden');
+                document.getElementById('m-' + item).classList.remove('active');
+            });
+            document.getElementById('s-' + id).classList.remove('hidden');
+            document.getElementById('m-' + id).classList.add('active');
+            toggleMenu(false);
+            loadSystemData();
+        } 
+        
+        // रेंडरिंग इंजन - पूरा ऑफलाइन फ्लो डेटा मैनेज करने के लिए
+        function loadSystemData() {
+            const lDeps = JSON.parse(localStorage.getItem('nn_live_deps')) || [];
+            const hDeps = JSON.parse(localStorage.getItem('nn_hist_deps')) || [];
+            const lWits = JSON.parse(localStorage.getItem('nn_live_wits')) || [];
+            const hWits = JSON.parse(localStorage.getItem('nn_hist_wits')) || [];
+            const curGame = JSON.parse(localStorage.getItem('nn_current_game')) || { name: "N/A", number: "00" };
+            const gHist = JSON.parse(localStorage.getItem('nn_game_history_list')) || [];
+
+            document.getElementById('badge-dep-count').innerText = lDeps.length + ' Req';
+            document.getElementById('badge-wit-count').innerText = lWits.length + ' Req';
+
+            // 1. लाइव डिपॉजिट रिक्वेस्ट लिस्टिंग (Approval System)
+            const depReqBox = document.getElementById('render-deposit-req');
+            if(lDeps.length === 0) {
+                depReqBox.innerHTML = '<div class="no-data">कोई पेंडिंग डिपॉजिट रिक्वेस्ट नहीं है।</div>';
+            } else {
+                depReqBox.innerHTML = lDeps.map(item => `
+                    <div class="game-card">
+                        <div class="flex-row">
+                            <span style="font-weight:bold;">${item.user}</span>
+                            <span style="color:#10b981; font-weight:bold; font-family:monospace;">₹${item.amount}</span>
+                        </div>
+                        <div style="font-size:11px; color:#9ca3af; margin-top:5px; font-family:monospace;">UTR: ${item.utr}</div>
+                        <div class="btn-group">
+                            <button onclick="processDeposit(${item.id}, true)" class="action-btn btn-approve">Approve</button>
+                            <button onclick="processDeposit(${item.id}, false)" class="action-btn btn-reject">Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 2. डिपॉजिट हिस्ट्री लिस्टिंग (सक्सेसफुल लिस्ट)
+            document.getElementById('render-deposit-hist').innerHTML = hDeps.length === 0 ? '<div class="no-data">इतिहास खाली है।</div>' : hDeps.map(item => `
+                <div class="history-card">
+                    <div class="row-gap">
+                        <span style="font-weight:bold;">${item.user} • <span style="color:#10b981;">₹${item.amount}</span></span>
+                        <span style="font-size:10px; color:#6b7280; font-family:monospace;">UTR: ${item.utr}</span>
+                    </div>
+                    <span style="font-size:10px; color:#6b7280;">${item.time}</span>
+                </div>
+            `).join('');
+
+            // 3. लाइव विथड्रॉल रिक्वेस्ट लिस्टिंग (Payout Approval)
+            const witReqBox = document.getElementById('render-withdrawal-req');
+            if(lWits.length === 0) {
+                witReqBox.innerHTML = '<div class="no-data">कोई पेंडिंग विथड्रॉल रिक्वेस्ट नहीं है।</div>';
+            } else {
+                witReqBox.innerHTML = lWits.map(item => `
+                    <div class="game-card game-card-blue">
+                        <div class="flex-row">
+                            <span style="font-weight:bold;">${item.user}</span>
+                            <span style="color:#ef4444; font-weight:bold; font-family:monospace;">₹${item.amount}</span>
+                        </div>
+                        <div style="font-size:11px; color:#9ca3af; margin-top:5px; font-family:monospace;">UPI ID: ${item.upi}</div>
+                        <div class="btn-group">
+                            <button onclick="processWithdrawal(${item.id}, true)" class="action-btn btn-paid">Mark Paid</button>
+                            <button onclick="processWithdrawal(${item.id}, false)" class="action-btn btn-reject">Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 4. विथड्रॉल हिस्ट्री लिस्टिंग (Paid List)
+            document.getElementById('render-withdrawal-hist').innerHTML = hWits.length === 0 ? '<div class="no-data">इतिहास खाली है।</div>' : hWits.map(item => `
+                <div class="history-card">
+                    <div class="row-gap">
+                        <span style="font-weight:bold;">${item.user} • <span style="color:#ef4444;">₹${item.amount}</span></span>
+                        <span style="font-size:10px; color:#6b7280; font-family:monospace;">UPI: ${item.upi}</span>
+                    </div>
+                    <span style="font-size:10px; color:#6b7280;">${item.time}</span>
+                </div>
+            `).join('');
+
+            // 5. गेम लाइव प्रीव्यू डेटा बाइंडिंग
+            document.getElementById('live-m-name').innerText = curGame.name;
+            document.getElementById('live-m-num').innerText = curGame.number;
+
+            // 6. गेम रिजल्ट हिस्ट्री लिस्टिंग
+            document.getElementById('render-game-hist').innerHTML = gHist.length === 0 ? '<div class="no-data">कोई इतिहास उपलब्ध नहीं है।</div>' : gHist.map(item => `
+                <div class="game-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px;">
+                    <div class="row-gap">
+                        <span style="font-weight:bold; font-size:13px;">${item.name}</span>
+                        <span style="font-size:10px; color:#6b7280;">Declared: ${item.time}</span>
+                    </div>
+                    <div style="font-size:22px; font-weight:900; color:#10b981; font-family:monospace;">${item.number}</div>
+                </div>
+            `).join('');
+        }
+                // डिपॉजिट अप्रूवल और रिजेक्शन एक्शन्स
+        function processDeposit(id, approved) {
+            let list = JSON.parse(localStorage.getItem('nn_live_deps')) || [];
+            let hist = JSON.parse(localStorage.getItem('nn_hist_deps')) || [];
+            const req = list.find(item => item.id === id);
+            if (req && approved) {
+                hist.unshift({ user: req.user, amount: req.amount, utr: req.utr, time: new Date().toLocaleTimeString() });
+                localStorage.setItem('nn_hist_deps', JSON.stringify(hist));
+                alert("डिपॉजिट एप्रूव्ड! वॉलेट अपडेट कर दिया गया है।");
+            } else if (req) {
+                alert("डिपॉजिट रिक्वेस्ट रिजेक्ट कर दी गई है।");
+            }
+            localStorage.setItem('nn_live_deps', JSON.stringify(list.filter(item => item.id !== id)));
+            loadSystemData();
+        }
+
+        // विथड्रॉल अप्रूवल एक्शन्स
+        function processWithdrawal(id, paid) {
+            let list = JSON.parse(localStorage.getItem('nn_live_wits')) || [];
+            let hist = JSON.parse(localStorage.getItem('nn_hist_wits')) || [];
+            const req = list.find(item => item.id === id);
+            if (req && paid) {
+                hist.unshift({ user: req.user, amount: req.amount, upi: req.upi, time: new Date().toLocaleTimeString() });
+                localStorage.setItem('nn_hist_wits', JSON.stringify(hist));
+                alert("भुगतान सफल मार्क हुआ!");
+            } else if (req) {
+                alert("विथड्रॉल रिक्वेस्ट रिजेक्ट कर दी गई है।");
+            }
+            localStorage.setItem('nn_live_wits', JSON.stringify(list.filter(item => item.id !== id)));
+            loadSystemData();
+        }
+
+        // नया रिज़ल्ट सेव करके गेम में लाइव पुश करने का लॉजिक (95x Form)
+        function pushMarketResult(event) {
+            event.preventDefault();
+            const mName = document.getElementById('sel-market').value;
+            const mNum = document.getElementById('inp-number').value;
+
+            // लोकलस्टोरेज में लाइव डेटा बदलें (ताकि सीधे game.html पर यही नंबर शो हो)
+            localStorage.setItem('nn_current_game', JSON.stringify({ name: mName, number: mNum }));
+
+            // रिजल्ट इतिहास अपडेट करें
+            let hist = JSON.parse(localStorage.getItem('nn_game_history_list')) || [];
+            hist.unshift({ name: mName, number: mNum, time: new Date().toLocaleTimeString() });
+            localStorage.setItem('nn_game_history_list', JSON.stringify(hist));
+
+            alert("🎉 लाइव अपडेट सफल! मार्केट में नंबर लाइव पुश हो चुका है।");
+            document.getElementById('resultForm').reset();
+            loadSystemData();
+        }
+
+        // डिफ़ॉल्ट रूप से फर्स्ट स्क्रीन लोड करें
+        window.onload = function() {
+            viewSection('info');
+        };
+                // ======= हाइब्रिड मार्केट्स का मुख्य दिमाग =======
+        function calculateAutoWinner() {
+            var bets = JSON.parse(localStorage.getItem('nn_user_bets')) || [];
+            var numberLoad = {};
+            for (var i = 1; i <= 100; i++) { numberLoad[i] = 0; }
+            for (var j = 0; j < bets.length; j++) {
+                var num = bets[j].number;
+                var amt = bets[j].amount;
+                if (numberLoad[num] !== undefined) { numberLoad[num] += amt; }
+            }
+            var minLoad = Infinity;
+            var bestNumbers = [];
+            for (var k = 1; k <= 100; k++) {
+                if (numberLoad[k] < minLoad) { minLoad = numberLoad[k]; bestNumbers = [k]; }
+                else if (numberLoad[k] === minLoad) { bestNumbers.push(k); }
+            }
+            var randomIndex = Math.floor(Math.random() * bestNumbers.length);
+            return bestNumbers[randomIndex];
+        }
+
+        function toggleMarketMode(marketId, mode) {
+            var modes = JSON.parse(localStorage.getItem('nn_market_modes')) || {};
+            if (mode === 'AUTO') {
+                modes[marketId] = { mode: 'AUTO', num: '' };
+                localStorage.setItem('nn_market_modes', JSON.stringify(modes));
+                alert(marketId.toUpperCase() + " ऑटो मोड (कम लोड) पर सेट हुआ।");
+            } else {
+                var numInput = document.getElementById('num-' + marketId).value;
+                if (!numInput) { alert("कृपया पहले एडवांस नंबर बॉक्स में नंबर डालें!"); return; }
+                modes[marketId] = { mode: 'MANUAL', num: numInput };
+                localStorage.setItem('nn_market_modes', JSON.stringify(modes));
+                alert(marketId.toUpperCase() + " मैन्युअल मोड पर सेट हुआ। विनर: " + numInput);
+            }
+            if (typeof loadSystemData === 'function') { loadSystemData(); }
+        }
+
+        function executeMarketResult(marketId) {
+            var modes = JSON.parse(localStorage.getItem('nn_market_modes')) || {};
+            var currentMarket = modes[marketId] || { mode: 'AUTO', num: '' };
+            var finalWinningNumber = "";
+
+            if (currentMarket.mode === 'MANUAL' && currentMarket.num) {
+                finalWinningNumber = currentMarket.num;
+                alert("📢 [MANUAL]: " + marketId.toUpperCase() + " का सेट नंबर " + finalWinningNumber + " लाइव हुआ।");
+            } else {
+                finalWinningNumber = calculateAutoWinner();
+                alert("⚡ [AUTO]: " + marketId.toUpperCase() + " में सबसे कम लोड वाला नंबर [" + finalWinningNumber + "] ऑटो-लाइव हुआ!");
+            }
+
+            localStorage.setItem('nn_current_game', JSON.stringify({ name: marketId.toUpperCase(), number: finalWinningNumber }));
+            var hist = JSON.parse(localStorage.getItem('nn_game_history_list')) || [];
+            hist.unshift({ name: marketId.toUpperCase(), number: finalWinningNumber, time: new Date().toLocaleTimeString() });
+            localStorage.setItem('nn_game_history_list', JSON.stringify(hist));
+            if (typeof loadSystemData === 'function') { loadSystemData(); }
+        }
+
+        function saveWheelSettings() {
+            var rate = document.getElementById('wheel-jackpot-rate').value;
+            localStorage.setItem('nn_wheel_jackpot', rate);
+            alert("⚙️ व्हील सीक्रेट सेटिंग्स सुरक्षित! जैकपॉट चांस: " + rate + "%");
+        }
+               // ======= यूज़र मैनेजमेंट: लाइव सर्च इंजन =======
+        var currentManagedUser = null; // करंट सिलेक्टेड यूज़र को ट्रैक करने के लिए
+
+        function searchUserWallet() {
+            var searchId = document.getElementById('search-user-id').value.trim();
+            if (!searchId) { alert("कृपया कोई यूजर आईडी टाइप करें!"); return; }
+
+            // यूज़र्स का एक डमी डेटाबेस सिमुलेशन (यदि पहले से न हो)
+            var usersDB = JSON.parse(localStorage.getItem('nn_users_accounts'));
+            if (!usersDB) {
+                usersDB = {
+                    "User_4092": { balance: 500, status: "ACTIVE" },
+                    "User_8821": { balance: 1000, status: "ACTIVE" },
+                    "User_3021": { balance: 1500, status: "ACTIVE" }
+                };
+                localStorage.setItem('nn_users_accounts', JSON.stringify(usersDB));
+            }
+
+            // यूज़र को डेटाबेस में खोजना
+            if (usersDB[searchId]) {
+                currentManagedUser = searchId;
+                var user = usersDB[searchId];
+
+                // स्क्रीन पर यूज़र का डेटा लाइव अपडेट करना
+                document.getElementById('txt-manage-username').innerText = searchId;
+                document.getElementById('txt-manage-balance').innerText = "₹" + user.balance;
+                
+                var statusEl = document.getElementById('txt-manage-status');
+                var banBtn = document.getElementById('btn-ban-toggle');
+                
+                if (user.status === "ACTIVE") {
+                    statusEl.innerText = "STATUS: ACTIVE";
+                    statusEl.style.color = "#10b981";
+                    statusEl.style.background = "rgba(16,185,129,0.1)";
+                    if (banBtn) banBtn.innerText = "🚫 Permanent BAN Player";
+                } else {
+                    statusEl.innerText = "STATUS: BANNED";
+                    statusEl.style.color = "#ef4444";
+                    statusEl.style.background = "rgba(239,68,68,0.1)";
+                    if (banBtn) banBtn.innerText = "✅ Unban / Activate Player";
+                }
+
+                // यूआई कार्ड्स को विज़िबल करना
+                document.getElementById('user-profile-result-card').classList.remove('hidden');
+                document.getElementById('user-manage-placeholder').classList.add('hidden');
+            } else {
+                alert("❌ यूजर आईडी [" + searchId + "] नहीं मिली! कृपया सही आईडी डालें (जैसे: User_8821)");
+                document.getElementById('user-profile-result-card').classList.add('hidden');
+                document.getElementById('user-manage-placeholder').classList.remove('hidden');
+                currentManagedUser = null;
+            }
+        }
+        // ======= यूज़र मैनेजमेंट: बैलेंस बढ़ाना/घटाना और बैन लॉजिक =======
+        function modifyUserWallet(action) {
+            if (!currentManagedUser) return;
+            
+            var amtInput = document.getElementById('manage-amt-input').value;
+            var amt = parseInt(amtInput, 10);
+            
+            if (!amtInput || isNaN(amt) || amt <= 0) {
+                alert("कृपया एक सही और वैध राशि (Amount) टाइप करें!");
+                return;
+            }
+
+            var usersDB = JSON.parse(localStorage.getItem('nn_users_accounts'));
+            if (!usersDB || !usersDB[currentManagedUser]) return;
+
+            if (action === 'ADD') {
+                usersDB[currentManagedUser].balance += amt;
+                alert("➕ सफलता!\nयूजर " + currentManagedUser + " के वॉलेट में ₹" + amt + " सफलतापूर्वक जोड़ दिए गए हैं।");
+            } else if (action === 'DEDUCT') {
+                if (usersDB[currentManagedUser].balance < amt) {
+                    alert("❌ गलती: यूजर के पास पर्याप्त बैलेंस नहीं है! करंट बैलेंस: ₹" + usersDB[currentManagedUser].balance);
+                    return;
+                }
+                usersDB[currentManagedUser].balance -= amt;
+                alert("➖ सफलता!\nयूजर " + currentManagedUser + " के वॉलेट से ₹" + amt + " सफलतापूर्वक काट लिए गए हैं।");
+            }
+
+            // लोकल डेटाबेस को अपडेट और स्क्रीन रिफ्रेश करना
+            localStorage.setItem('nn_users_accounts', JSON.stringify(usersDB));
+            document.getElementById('txt-manage-balance').innerText = "₹" + usersDB[currentManagedUser].balance;
+            document.getElementById('manage-amt-input').value = "";
+            
+            if (typeof loadSystemData === 'function') { loadSystemData(); }
+        }
+
+        function toggleUserBanStatus() {
+            if (!currentManagedUser) return;
+
+            var usersDB = JSON.parse(localStorage.getItem('nn_users_accounts'));
+            if (!usersDB || !usersDB[currentManagedUser]) return;
+
+            var currentUserStatus = usersDB[currentManagedUser].status || "ACTIVE";
+            var statusEl = document.getElementById('txt-manage-status');
+            var banBtn = document.getElementById('btn-ban-toggle');
+
+            if (currentUserStatus === "ACTIVE") {
+                // यूजर को बैन करना
+                usersDB[currentManagedUser].status = "BANNED";
+                statusEl.innerText = "STATUS: BANNED";
+                statusEl.style.color = "#ef4444";
+                statusEl.style.background = "rgba(239,68,68,0.1)";
+                if (banBtn) banBtn.innerText = "✅ Unban / Activate Player";
+                alert("🚫 यूजर आईडी [" + currentManagedUser + "] को हमेशा के लिए बैन कर दिया गया है।");
+            } else {
+                // यूजर को अनबैन करना
+                usersDB[currentManagedUser].status = "ACTIVE";
+                statusEl.innerText = "STATUS: ACTIVE";
+                statusEl.style.color = "#10b981";
+                statusEl.style.background = "rgba(16,185,129,0.1)";
+                if (banBtn) banBtn.innerText = "🚫 Permanent BAN Player";
+                alert("✅ यूजर आईडी [" + currentManagedUser + "] को वापस एक्टिवेट कर दिया गया है।");
+            }
+
+            localStorage.setItem('nn_users_accounts', JSON.stringify(usersDB));
+            if (typeof loadSystemData === 'function') { loadSystemData(); }
+        }
+                // ======= एजेंट मैनेजमेंट: डेटाबेस एवं लाइव सर्च इंजन =======
+        var currentManagedAgent = null; // करंट सिलेक्टेड एजेंट को ट्रैक करने के लिए
+
+        function searchAgentLedger() {
+            var searchId = document.getElementById('search-agent-id').value.trim();
+            if (!searchId) { alert("कृपया कोई एजेंट या प्रमोटर आईडी टाइप करें!"); return; }
+
+            // प्रमोटर्स का लोकल डेटाबेस सिमुलेशन (यदि पहले से न हो)
+            var agentsDB = JSON.parse(localStorage.getItem('nn_agents_accounts'));
+            if (!agentsDB) {
+                agentsDB = {
+                    "Agent_007": { referrals: 45, unpaid_comm: 1500, comm_rate: 5 },
+                    "Promoter_VIP": { referrals: 120, unpaid_comm: 4800, comm_rate: 10 }
+                };
+                localStorage.setItem('nn_agents_accounts', JSON.stringify(agentsDB));
+            }
+
+            // एजेंट को डेटाबेस में खोजना
+            if (agentsDB[searchId]) {
+                currentManagedAgent = searchId;
+                var agent = agentsDB[searchId];
+
+                // स्क्रीन पर लाइव डेटा रेंडर करना
+                document.getElementById('txt-agent-id-display').innerText = searchId;
+                document.getElementById('txt-agent-referrals').innerText = agent.referrals + " PLAYERS";
+                document.getElementById('txt-agent-unpaid').innerText = "₹" + agent.unpaid_comm;
+                document.getElementById('agent-comm-rate-input').value = agent.comm_rate;
+
+                // यूआई कार्ड्स को विज़िबल करना
+                document.getElementById('agent-profile-result-card').classList.remove('hidden');
+                document.getElementById('agent-manage-placeholder').classList.add('hidden');
+            } else {
+                alert("❌ प्रमोटर आईडी [" + searchId + "] नहीं मिली! कृपया सही आईडी डालें (जैसे: Agent_007)");
+                document.getElementById('agent-profile-result-card').classList.add('hidden');
+                document.getElementById('agent-manage-placeholder').classList.remove('hidden');
+                currentManagedAgent = null;
+            }
+        }
+                // ======= एजेंट मैनेजमेंट: रेट अपडेट और कमीशन सेटलमेंट लॉजिक =======
+        function updateAgentCommRate() {
+            if (!currentManagedAgent) return;
+            
+            var rateInput = document.getElementById('agent-comm-rate-input').value;
+            var rate = parseInt(rateInput, 10);
+            
+            if (!rateInput || isNaN(rate) || rate < 1 || rate > 100) {
+                alert("कृपया 1 से 100 के बीच का कोई सही कमीशन प्रतिशत (%) दर्ज करें!");
+                return;
+            }
+
+            var agentsDB = JSON.parse(localStorage.getItem('nn_agents_accounts'));
+            if (!agentsDB || !agentsDB[currentManagedAgent]) return;
+
+            // रेट अपडेट करना
+            agentsDB[currentManagedAgent].comm_rate = rate;
+            localStorage.setItem('nn_agents_accounts', JSON.stringify(agentsDB));
+            
+            alert("⚙️ सफलता!\nएजेंट " + currentManagedAgent + " का नया कमीशन रेट " + rate + "% पर सुरक्षित कर दिया गया है।");
+            if (typeof loadSystemData === 'function') { loadSystemData(); }
+        }
+
+        function settleAgentCommission() {
+            if (!currentManagedAgent) return;
+
+            var agentsDB = JSON.parse(localStorage.getItem('nn_agents_accounts'));
+            if (!agentsDB || !agentsDB[currentManagedAgent]) return;
+
+            var dues = agentsDB[currentManagedAgent].unpaid_comm;
+            if (dues <= 0) {
+                alert("इस एजेंट का कोई भी बकाया कमीशन राशि (Dues) शेष नहीं है!");
+                return;
+            }
+
+            // पुष्टि संदेश
+            var confirmPay = confirm("क्या आपने एजेंट " + currentManagedAgent + " को ₹" + dues + " का भुगतान मैन्युअली ट्रांसफर कर दिया है? स्टेटस क्लियर करने के लिए OK दबाएं।");
+            if (!confirmPay) return;
+
+            // अनपेड कमीशन को ₹0 करना
+            agentsDB[currentManagedAgent].unpaid_comm = 0;
+            localStorage.setItem('nn_agents_accounts', JSON.stringify(agentsDB));
+            
+            // यूआई अपडेट करना
+            document.getElementById('txt-agent-unpaid').innerText = "₹0";
+            
+            alert("💳 खाता सेटल!\nएजेंट " + currentManagedAgent + " का बकाया कमीशन साफ़ कर दिया गया है। करंट ड्यूस: ₹0");
+            if (typeof loadSystemData === 'function') { loadSystemData(); }
+        }
+        
+        
+    </script>
+</body>
+</html>

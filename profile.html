@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>N&N Alpha Arena - Profile</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background-color: #080710; color: #e5e7eb; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 15px; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 380px; background-color: #111827; padding: 18px; border-radius: 24px; border: 1px solid #1f2937; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
+        .top-bar { display: flex; align-items: center; width: 100%; margin-bottom: 20px; }
+        .back-arrow { font-size: 20px; color: #ffffff; cursor: pointer; text-decoration: none; padding: 5px; }
+        .page-title { font-size: 16px; font-weight: bold; margin-left: 15px; color: #ffffff; }
+        .user-section { display: flex; align-items: center; justify-content: space-between; background-color: #1f2937; padding: 14px; border-radius: 16px; border: 1px solid #374151; margin-bottom: 15px; }
+        .user-left { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { font-size: 32px; }
+        .username-text { font-size: 15px; font-weight: bold; color: #ffffff; }
+        .edit-arrow { font-size: 18px; color: #a855f7; cursor: pointer; padding: 5px; font-weight: bold; }
+        .coin-box { display: flex; justify-content: space-between; align-items: center; background-color: #030712; padding: 14px 16px; border-radius: 16px; border: 1px solid #1f2937; margin-bottom: 20px; }
+        .coin-left { text-align: left; }
+        .coin-left span { font-size: 10px; color: #9ca3af; font-weight: bold; text-transform: uppercase; }
+        .coin-left h3 { font-size: 18px; color: #22c55e; font-weight: 800; margin-top: 1px; }
+        .refresh-btn { font-size: 18px; color: #a855f7; cursor: pointer; border: none; background: none; transition: 0.3s; padding: 5px; }
+        .wallet-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .wallet-box { background: linear-gradient(135deg, #111827, #1f2937); border: 1px solid #374151; border-radius: 16px; padding: 16px 10px; cursor: pointer; text-align: center; }
+        .box-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+        .box-name { font-size: 13px; font-weight: bold; color: #ffffff; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; background-color: #1f2937; padding: 14px 15px; border-radius: 12px; border: 1px solid #374151; cursor: pointer; margin-bottom: 10px; }
+        .menu-left { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+        .arrow-right { color: #6b7280; font-size: 12px; }
+        .btn-logout { background-color: #b91c1c; border: 1px solid #dc2626; color: white; margin-top: 15px; justify-content: center; font-weight: bold; }
+        .edit-screen { display: none; text-align: left; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; color: #9ca3af; margin-bottom: 5px; font-weight: 600; }
+        input, select { width: 100%; background-color: #030712; border: 1px solid #1f2937; border-radius: 12px; padding: 12px; font-size: 14px; color: #ffffff; outline: none; }
+        .btn-save { width: 100%; background: linear-gradient(135deg, #5b21b6, #1d4ed8); color: white; border: none; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="top-bar">
+            <a href="templates_dashboard.html" class="back-arrow">⬅️</a>
+            <span class="page-title" id="titleText">My Profile</span>
+        </div>
+        <!-- MAIN VIEW -->
+        <div id="mainProfileView">
+            <div class="user-section">
+                <div class="user-left"><span class="logo-icon">🔮</span><p class="username-text" id="displayUsername">Player_7890</p></div>
+                <span class="edit-arrow" onclick="openEditProfile()">&gt;</span>
+            </div>
+            <div class="coin-box">
+                <div class="coin-left"><span>Available Coins</span><h3 id="coinBalance">1,250.00</h3></div>
+                <button class="refresh-btn" onclick="refreshCoins()">🔄</button>
+            </div>
+            <div class="wallet-container">
+                <div class="wallet-box" onclick="alert('Opening Deposit Screen...')"><span class="box-icon">📥</span><span class="box-name">Deposit</span></div>
+                <div class="wallet-box" onclick="alert('Opening Withdrawal Screen...')"><span class="box-icon">📤</span><span class="box-name">Withdraw</span></div>
+            </div>
+            <div class="menu-item" onclick="alert('Opening History...')"><div class="menu-left"><span>🕒</span> History Reports</div><span class="arrow-right">&gt;</span></div>
+            <div class="menu-item" onclick="alert('Opening WhatsApp Support...')"><div class="menu-left"><span>🎧</span> WhatsApp Support</div><span class="arrow-right">&gt;</span></div>
+            <div class="menu-item" onclick="alert('Opening Password Settings...')"><div class="menu-left"><span>🔒</span> Change Password</div><span class="arrow-right">&gt;</span></div>
+            <div class="menu-item" onclick="alert('Opening Notifications...')"><div class="menu-left"><span>🔔</span> Notifications</div><span class="arrow-right">&gt;</span></div>
+            <div class="menu-item" onclick="alert('Opening Terms...')"><div class="menu-left"><span>📜</span> Terms & Conditions</div><span class="arrow-right">&gt;</span></div>
+            <div class="menu-item btn-logout" onclick="alert('Logging out...')"><div class="menu-left">🚪 Logout Account</div></div>
+        </div>
+        <!-- EDIT VIEW -->
+        <div id="editProfileView" class="edit-screen">
+            <div class="form-group"><label>First Name</label><input type="text" id="editFirstName" value="Rahul"></div>
+            <div class="form-group"><label>Last Name</label><input type="text" id="editLastName" value="Sharma"></div>
+            <div class="form-group"><label>Username</label><input type="text" id="editUsername" value="Player_7890"></div>
+            <div class="form-group"><label>Gmail Address</label><input type="email" id="editEmail" value="rahul@gmail.com"></div>
+            <div class="form-group"><label>Gender</label><select id="editGender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></div>
+            <button type="button" onclick="saveProfileData()" class="btn-save">Save & Update</button>
+        </div>
+    </div>
+    <script>
+        function openEditProfile() {
+            document.getElementById('mainProfileView').style.display = 'none';
+            document.getElementById('editProfileView').style.display = 'block';
+            document.getElementById('titleText').innerText = 'Edit Profile';
+            document.querySelector('.back-arrow').setAttribute('onclick', 'closeEditProfile()');
+            document.querySelector('.back-arrow').removeAttribute('href');
+        }
+        function closeEditProfile() {
+            document.getElementById('mainProfileView').style.display = 'block';
+            document.getElementById('editProfileView').style.display = 'none';
+            document.getElementById('titleText').innerText = 'My Profile';
+            document.querySelector('.back-arrow').setAttribute('href', 'templates_dashboard.html');
+            document.querySelector('.back-arrow').removeAttribute('onclick');
+        }
+        function saveProfileData() {
+            var newUsername = document.getElementById('editUsername').value;
+            document.getElementById('displayUsername').innerText = newUsername;
+            alert('Profile data saved successfully!');
+            closeEditProfile();
+        }
+        function refreshCoins() { alert('Balance Refreshed! Current Coins: 1,250.00'); }
+    </script>
+</body>
+</html>
