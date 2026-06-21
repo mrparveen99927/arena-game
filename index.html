@@ -145,7 +145,7 @@
             document.getElementById('registerSection').classList.toggle('hidden');
         }
                 document.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+                
 
     //           
     const usernameInput = document.querySelector('input[name="mobile"]').value.trim();
@@ -158,7 +158,7 @@
     }
 
     try {
-        const response = await fetch("http://127.0.0", {
+                const response = await fetch("https://https://arena-backen.onrender.com", {    
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: usernameInput, password: passwordInput })
@@ -183,7 +183,8 @@
     } catch (error) {
         console.error(" :", error);
         alert("          app.py  ");
-    }
+ 
+  }
 });
 
         
