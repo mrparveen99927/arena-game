@@ -145,46 +145,47 @@
             document.getElementById('registerSection').classList.toggle('hidden');
         }
                 document.getElementById('loginForm').addEventListener('submit', async function(e) {
-                
+    e.preventDefault();
 
-    //           
-    const usernameInput = document.querySelector('input[name="mobile"]').value.trim();
-    const passwordInput = document.querySelector('input[name="password"]')?.value.trim() || 
-                          document.querySelector('input[type="password"]').value.trim();
+    const usernameInput = document.querySelector('input[name="mobile"]')?.value.trim() || "";
+    const passwordInput = document.querySelector('input[name="password"]')?.value.trim() || "";
 
     if (!usernameInput || !passwordInput) {
-        alert("     ");
+        alert("Please enter both mobile number and password.");
         return;
     }
 
     try {
-                const response = await fetch("https://https://arena-backen.onrender.com", {    
+        const response = await fetch("https://arena-backen.onrender.com", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: usernameInput, password: passwordInput })
+            headers: { 
+                "Content-Type": "application/json" 
+            },
+            body: JSON.stringify({ 
+                username: usernameInput, 
+                password: passwordInput 
+            })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            //        
             localStorage.setItem("game_username", data.username);
             localStorage.setItem("game_balance", data.balance);
 
             if (data.type === "register") {
-                alert(" !       ");
+                alert("Registration successful! New account added.");
             } else {
-                alert(" !");
+                alert("Login successful!");
             }
             window.location.href = 'templates_dashboard.html';
         } else {
-            alert(" : " + data.message);
+            alert("Login failed: " + data.message);
         }
     } catch (error) {
-        console.error(" :", error);
-        alert("          app.py  ");
- 
-  }
+        console.error("Server Error:", error);
+        alert("Database server connection failed. Please check your Render server.");
+    }
 });
 
         

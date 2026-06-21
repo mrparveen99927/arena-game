@@ -4,9 +4,9 @@ from pymongo import MongoClient
 import os
 
 app = Flask(__name__)
-CORS(app)  # फ्रंटएंड को बिना किसी एरर के कनेक्ट करने के लिए
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# आपका नया मोंगो-डीबी लिंक
+# "    ()          "
 MONGO_URI = os.getenv("MONGO_URI")
 
 try:
