@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)  # फ्रंटएंड को बिना किसी एरर के कनेक्ट करने के लिए
 
 # आपका नया मोंगो-डीबी लिंक
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://arena_user:Arena999@cluster0.pluvfcd.mongodb.net/?appName=Cluster0")
+MONGO_URI = os.getenv("MONGO_URI")
 
 try:
     client = MongoClient(MONGO_URI)
