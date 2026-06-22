@@ -410,6 +410,32 @@
     </main>
         <!-- ऑफ़लाइन इंजन स्क्रिप्ट (LocalStorage संचालित) -->
     <script>
+    // 🔐 एडमिन सुरक्षा आईडी और पासवर्ड सिस्टम (लूप-फ्री और 100% सेफ)
+(function checkAdminLogin() {
+    // 🎯 नियम: अगर एडमिन पहले ही इसी बार सही लॉगिन कर चुका है, तो दोबारा पासवर्ड नहीं मांगेगा
+    if (sessionStorage.getItem("adminLoggedIn") === "true") {
+        return; // कोड यहीं रुक जाएगा और पेज बार-बार रिफ्रेश होने पर भी लूप नहीं बनेगा
+    }
+
+    const correctAdminID = "admin";       // 🎯 आपकी आईडी
+    const correctAdminPass = "Arena999";   // 🎯 आपका पासवर्ड
+
+    // स्क्रीन पर इनपुट बॉक्स (पॉप-अप) खोलना
+    let enteredID = prompt("कृपया एडमिन आईडी (Admin ID) दर्ज करें:");
+    let enteredPass = prompt("कृपया एडमिन पासवर्ड (Admin Password) दर्ज करें:");
+
+    // 🎯 अगर यूजर ने Cancel बटन दबाया या गलत आईडी/पासवर्ड डाला
+    if (!enteredID || !enteredPass || enteredID !== correctAdminID || enteredPass !== correctAdminPass) {
+        alert("❌ गलत आईडी/पासवर्ड या लॉगिन निरस्त! सुरक्षा कारणों से आप सीपैनल नहीं खोल सकते।");
+        // वापस होम डैशबोर्ड पर भगा देना
+        window.location.href = "templates_dashboard.html";
+    } else {
+        alert("🔒 एडमिन लॉगिन सफल! आपका स्वागत है।");
+        // 🎯 सबसे ज़रूरी काम: ब्राउज़र की मेमोरी में लिख देना कि लॉगिन सफल हो चुका है
+        sessionStorage.setItem("adminLoggedIn", "true");
+    }
+})();
+
     const BACKEND_URL = "https://arena-backen.onrender.com";
         async function loadLiveUsers() {
         const utrList = document.getElementById('utr-list');
@@ -481,16 +507,24 @@
         // स्पेसिफिक सेक्शन पर स्विच करना
             
         function viewSection(id) {
-                const list = ['info', 'withdrawal', 'withdrawal-hist', 'deposit', 'deposit-hist', 'game-result', 'game-history', 'game-management', 'hybrid-markets', 'wheel-secret-set', 'anti-cheat-shield', 'agent-control'];
-            list.forEach(item => {
-                document.getElementById('s-' + item).classList.add('hidden');
-                document.getElementById('m-' + item).classList.remove('active');
-            });
-            document.getElementById('s-' + id).classList.remove('hidden');
-            document.getElementById('m-' + id).classList.add('active');
-            toggleMenu(false);
-            loadSystemData();
-        } 
+    const list = ['info', 'withdrawal', 'withdrawal-hist', 'deposit', 'deposit-hist', 'game-result', 'game-history', 'game-management', 'hybrid-markets', 'wheel-secret-set', 'anti-cheat-shield', 'user-manage', 'agent-control'];
+    
+    list.forEach(item => {
+        if(document.getElementById('s-' + item)) document.getElementById('s-' + item).classList.add('hidden');
+        if(document.getElementById('m-' + item)) document.getElementById('m-' + item).classList.remove('active');
+    });
+
+    // 🎯 यह जादुई लाइन: दूसरा मेनू खुलते ही ज़िद्दी प्रोफ़ाइल कार्ड को छुपा देगी
+    if(document.getElementById('user-profile-result-card')) {
+        document.getElementById('user-profile-result-card').classList.add('hidden');
+    }
+
+    if(document.getElementById('s-' + id)) document.getElementById('s-' + id).classList.remove('hidden');
+    if(document.getElementById('m-' + id)) document.getElementById('m-' + id).classList.add('active');
+    toggleMenu(false);
+    loadSystemData();
+}
+
         
         // रेंडरिंग इंजन - पूरा ऑफलाइन फ्लो डेटा मैनेज करने के लिए
         function loadSystemData() {
