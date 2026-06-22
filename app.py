@@ -84,7 +84,7 @@ def login():
         })
 
         if not user:
-            return jsonify({"success": False, "message": "अकाउंट नहीं मिला!"}), 44
+            return jsonify({"success": False, "message": "अकाउंट नहीं मिला!"}), 404
 
         if check_password_hash(user['password'], password):
             return jsonify({
