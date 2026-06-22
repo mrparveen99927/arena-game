@@ -57,7 +57,7 @@ def register():
             "email": email,
             "password": hashed_password,
             "referral_id": referral,
-            "balance": 0,
+            "balance": 50,
             "bonus_claimed": False,
             "role": "user"
         }
