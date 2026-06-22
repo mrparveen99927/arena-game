@@ -1,122 +1,125 @@
 import os
 import random
+import datetime
+import pytz
+import time
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
-from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-# CORS पूरी तरह अनलॉक ताकि फ्रंटएंड कनेक्शन में कोई रुकावट न आए
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 
-# आपका लाइव MongoDB कनेक्शन लिंक
-MONGO_URI = "mongodb+srv://arena_user:Arena999@cluster0.pluvfcd.mongodb.net/?appName=Cluster0"
+#    
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://arena_user:Arena999@cluster0.pluvfcd.mongodb.net/?appName=Cluster0")
+client = MongoClient(MONGO_URI)
+db = client['alpha_arena_db']
+users_collection = db['users']
 
-try:
-    client = MongoClient(MONGO_URI)
-    db = client['alpha_arena_db'] # आपका सही डेटाबेस नाम
-    users_collection = db['users'] 
-    print("MongoDB Connected Successfully!")
-except Exception as e:
-    print(f"MongoDB Connection Error: {e}")
+def get_ist_time():
+    return datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
 
 @app.route('/')
 def home():
-    return jsonify({"status": "running", "message": "N&N Alpha Arena Backend Server is Live!"})
+    return jsonify({"status": "success", "message": "Alpha Arena Backend Engine is Running Live!"}), 200
 
-# 📝 1. रजिस्ट्रेशन API (UID जनरेशन लॉजिक के साथ)
 @app.route('/api/register', methods=['POST'])
-def register():
+def register_user():
     try:
-        data = request.json
-        if not data:
-            return jsonify({"success": False, "message": "डेटा नहीं मिला!"}), 400
-
-        first_name = data.get('firstName')
-        last_name = data.get('lastName')
-        mobile = str(data.get('mobile')).strip()
-        email = str(data.get('email')).strip().lower()
-        password = data.get('password')
-        referral = data.get('referral', '')
-
-        if users_collection.find_one({"mobile": mobile}):
-            return jsonify({"success": False, "message": "यह मोबाइल नंबर पहले से रजिस्टर्ड है!"}), 400
-        if users_collection.find_one({"email": email}):
-            return jsonify({"success": False, "message": "यह ईमेल आईडी पहले से रजिस्टर्ड है!"}), 400
-
-        hashed_password = generate_password_hash(password)
-
-        # 🎯 रेंडर क्रैश एरर को यहाँ पूरी तरह फिक्स कर दिया गया है
-        generated_uid = str(random.randint(10000000, 99999999))
+        data = request.get_json() or {}
+        email = data.get('email')
+        mobile = data.get('mobile')
+        
+        if not email or not mobile:
+            return jsonify({"success": False, "message": "Email and Mobile are required"}), 400
+            
+        existing_user = users_collection.find_one({"$or": [{"email": email}, {"mobile": mobile}]})
+        if existing_user:
+            return jsonify({"success": False, "message": "User already exists"}), 400
 
         new_user = {
-            "uid": generated_uid,
-            "first_name": first_name,
-            "last_name": last_name,
+            "uid": str(random.randint(10000000, 99999999)),
+            "first_name": data.get('first_name', 'Arena'),
+            "last_name": data.get('last_name', 'Player'),
             "mobile": mobile,
             "email": email,
-            "password": hashed_password,
-            "referral_id": referral,
-            "balance": 50,
-            "bonus_claimed": False,
-            "role": "user"
+            "password": data.get('password'),
+            "balance": 50.0,
+            "status": "ACTIVE",
+            "created_at": datetime.datetime.utcnow()
         }
-
         users_collection.insert_one(new_user)
-        return jsonify({"success": True, "message": "Registration Successful!"}), 201
-
+        return jsonify({"success": True, "message": "Registration successful!", "uid": new_user["uid"]}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-# 🔑 2. लॉगिन API (UID रिस्पॉन्स लॉजिक के साथ)
 @app.route('/api/login', methods=['POST'])
-def login():
+def login_user():
     try:
-        data = request.json
-        if not data:
-            return jsonify({"success": False, "message": "डेटा नहीं मिला!"}), 400
-
-        login_id = str(data.get('loginId')).strip()
+        data = request.get_json() or {}
+        email = data.get('email')
         password = data.get('password')
-
-        user = users_collection.find_one({
-            "$or": [
-                {"mobile": login_id},
-                {"email": login_id.lower()}
-            ]
-        })
-
-        if not user:
-            return jsonify({"success": False, "message": "अकाउंट नहीं मिला! कृपया पहले सही रजिस्ट्रेशन करें।"}), 404
-
-        if check_password_hash(user['password'], password):
-            current_balance = user.get('balance', 0)
-            bonus_given = 0
-            
-            if not user.get('bonus_claimed', False):
-                bonus_given = random.randint(1, 50)
-                current_balance += bonus_given
-                users_collection.update_one(
-                    {"_id": user["_id"]},
-                    {"$set": {"balance": current_balance, "bonus_claimed": True}}
-                )
-
-            return jsonify({
-                "success": True, 
-                "message": "Login Successful!",
-                "user": {
-                    "uid": user.get('uid', '00000000'),
-                    "first_name": user['first_name'],
-                    "mobile": user['mobile'],
-                    "balance": current_balance
-                }
-            }), 200
+        
+        user = users_collection.find_one({"email": email, "password": password})
+        if user:
+            return jsonify({"success": True, "message": "Login Successful", "uid": user["uid"]}), 200
         else:
-            return jsonify({"success": False, "message": "गलत पासवर्ड!"}), 401
-
+            return jsonify({"success": False, "message": "Invalid credentials"}), 401
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-        @app.route('/api/admin/all-users', methods=['POST'])
+
+@app.route('/api/user/profile', methods=['GET'])
+def get_user_profile():
+    try:
+        uid = request.args.get('uid')
+        if not uid:
+            return jsonify({"success": False, "message": "UID is required"}), 400
+            
+        user = users_collection.find_one({"uid": uid})
+        if user:
+            return jsonify({
+                "uid": user.get('uid'),
+                "first_name": user.get('first_name'),
+                "last_name": user.get('last_name'),
+                "balance": user.get('balance', 0),
+                "status": user.get('status')
+            }), 200
+        return jsonify({"success": False, "message": "User not found"}), 404
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/place-bet', methods=['POST'])
+def place_bet():
+    try:
+        data = request.get_json() or {}
+        uid = data.get('uid')
+        amount = float(data.get('amount', 0))
+        selected_numbers = data.get('selected_numbers', [])
+        amt_per_number = data.get('amt_per_number', 0)
+        round_id = data.get('round_id', 'ROUND_01')
+        
+        user = users_collection.find_one({"uid": uid})
+        if not user or user.get('balance', 0) < amount:
+            return jsonify({"status": "error", "message": "Insufficient wallet balance"}), 400
+            
+        users_collection.update_one({"uid": uid}, {"$inc": {"balance": -amount}})
+        
+        bet_doc = {
+            "uid": uid,
+            "round_id": round_id,
+            "prediction": "95X_MATRIX",
+            "amount": amount,
+            "amt_per_number": amt_per_number,
+            "selected_numbers": selected_numbers,
+            "timestamp": datetime.datetime.utcnow(),
+            "status": "pending"
+        }
+        db.bets.insert_one(bet_doc)
+        return jsonify({"status": "success", "new_balance": user.get('balance', 0) - amount}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/admin/all-users', methods=['POST'])
 def admin_all_users():
     try:
         all_users_cursor = users_collection.find()
@@ -135,15 +138,9 @@ def admin_all_users():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-def get_ist_time():
-    import datetime
-    import pytz
-    return datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
-
 @app.route('/api/game-status', methods=['GET'])
 def get_game_status():
     try:
-        import datetime
         now = get_ist_time()
         time_5pm = now.replace(hour=17, minute=0, second=0, microsecond=0)
         time_440pm = now.replace(hour=16, minute=40, second=0, microsecond=0)
@@ -192,7 +189,6 @@ def get_admin_dashboard_sheet():
 @app.route('/api/admin/declare-result', methods=['POST'])
 def declare_result():
     try:
-        import datetime
         data = request.get_json() or {}
         now = get_ist_time()
         round_id = data.get('round_id') or f"FD_{now.strftime('%Y%m%d')}"
@@ -211,7 +207,7 @@ def declare_result():
         else:
             zero_money_numbers = [num for num, amt in number_sheet.items() if amt == 0]
             if zero_money_numbers:
-                final_winner = zero_money_numbers[0] #    
+                final_winner = random.choice(zero_money_numbers)
             else:
                 final_winner = min(number_sheet, key=number_sheet.get)
 
@@ -224,7 +220,7 @@ def declare_result():
         for bet in bets_list:
             if int(final_winner) in bet.get('selected_numbers', []):
                 winning_amount = bet.get('amt_per_number', 0) * 95
-                db.users.update_one({"uid": bet['uid']}, {"$inc": {"balance": winning_amount}})
+                users_collection.update_one({"uid": bet['uid']}, {"$inc": {"balance": winning_amount}})
                 db.bets.update_one({"_id": bet['_id']}, {"$set": {"status": "WIN", "payout": winning_amount}})
             else:
                 db.bets.update_one({"_id": bet['_id']}, {"$set": {"status": "LOSE", "payout": 0}})
