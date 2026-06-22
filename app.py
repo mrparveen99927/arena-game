@@ -23,6 +23,7 @@ def get_ist_time():
 def home():
     return jsonify({"status": "success", "message": "Alpha Arena Backend Engine is Running Live!"}), 200
 
+#   1:      
 @app.route('/api/register', methods=['POST'])
 def register_user():
     try:
@@ -37,14 +38,18 @@ def register_user():
         if existing_user:
             return jsonify({"success": False, "message": "User already exists"}), 400
 
+        #        - 
+        real_first_name = data.get('first_name') or data.get('name') or data.get('fullName') or 'Arena'
+        real_last_name = data.get('last_name') or ''
+
         new_user = {
             "uid": str(random.randint(10000000, 99999999)),
-            "first_name": data.get('first_name', 'Arena'),
-            "last_name": data.get('last_name', 'Player'),
+            "first_name": real_first_name, #     
+            "last_name": real_last_name,
             "mobile": mobile,
             "email": email,
             "password": data.get('password'),
-            "balance": 50.0,
+            "balance": 50.0, # 50   
             "status": "ACTIVE",
             "created_at": datetime.datetime.utcnow()
         }
@@ -53,14 +58,24 @@ def register_user():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+#   2:          
 @app.route('/api/login', methods=['POST'])
 def login_user():
     try:
         data = request.get_json() or {}
-        email = data.get('email')
+        username = data.get('email') 
         password = data.get('password')
         
-        user = users_collection.find_one({"email": email, "password": password})
+        if not username or not password:
+            return jsonify({"success": False, "message": "Username and password are required"}), 400
+            
+        #          
+        user = users_collection.find_one({
+            "$and": [
+                {"$or": [{"email": username}, {"mobile": username}]},
+                {"password": password}
+            ]
+        })
         if user:
             return jsonify({"success": True, "message": "Login Successful", "uid": user["uid"]}), 200
         else:
@@ -217,6 +232,7 @@ def declare_result():
             upsert=True
         )
 
+                # ---         ---
         for bet in bets_list:
             if int(final_winner) in bet.get('selected_numbers', []):
                 winning_amount = bet.get('amt_per_number', 0) * 95
@@ -225,7 +241,7 @@ def declare_result():
             else:
                 db.bets.update_one({"_id": bet['_id']}, {"$set": {"status": "LOSE", "payout": 0}})
 
-        return jsonify({"status": "success", "winner_declared": final_winner, "message": " !"}), 200
+        return jsonify({"status": "success", "winner_declared": final_winner, "message": "      !"}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
