@@ -135,14 +135,14 @@ body { display: flex; justify-content: center; align-items: flex-start; }
     //  100%       
     function handleUserLogout() {
         //    
-        const confirmLogout = confirm("      ?");
+        const confirmLogout = confirm("     Account Logout ");
         
         if (confirmLogout) {
             // :   (Session)        (Clear) 
             sessionStorage.clear();
             
             //          
-            alert("     !");
+            alert("     confirm");
             window.location.href = "index.html";
         }
     }

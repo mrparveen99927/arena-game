@@ -139,7 +139,105 @@ def admin_all_users():
         return jsonify({"success": True, "users": users_list}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+        import datetime
+import pytz
+import time
+
+def get_ist_time():
+    return datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
+
+@app.route('/api/game-status', methods=['GET'])
+def get_game_status():
+    try:
+        now = get_ist_time()
+        time_5pm = now.replace(hour=17, minute=0, second=0, microsecond=0)
+        time_440pm = now.replace(hour=16, minute=40, second=0, microsecond=0)
+        round_id = f"FD_{now.strftime('%Y%m%d')}"
         
+        if now < time_440pm:
+            time_remaining = int((time_440pm - now).total_seconds())
+            return jsonify({"status": "OPEN", "round_id": round_id, "message": "  !", "time_remaining": time_remaining})
+        elif time_440pm <= now < time_5pm:
+            time_remaining = int((time_5pm - now).total_seconds())
+            return jsonify({"status": "CLOSED", "round_id": round_id, "message": " !    ...", "time_remaining": time_remaining})
+        else:
+            return jsonify({"status": "RESULT_DECLARED", "round_id": round_id, "message": "       "})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/admin/dashboard-sheet', methods=['GET'])
+def get_admin_dashboard_sheet():
+    try:
+        now = get_ist_time()
+        round_id = f"FD_{now.strftime('%Y%m%d')}"
+        number_sheet = {str(i): 0.0 for i in range(1, 101)}
+        
+        bets = db.bets.find({"round_id": round_id})
+        for bet in bets:
+            for num in bet.get('selected_numbers', []):
+                if str(num) in number_sheet:
+                    number_sheet[str(num)] += bet.get('amt_per_number', 0)
+                    
+        zero_money_numbers = [num for num, amt in number_sheet.items() if amt == 0]
+        funded_numbers = {num: amt for num, amt in number_sheet.items() if amt > 0}
+        
+        highest_num = max(funded_numbers, key=funded_numbers.get) if funded_numbers else " "
+        lowest_num = min(funded_numbers, key=funded_numbers.get) if funded_numbers else " "
+        
+        return jsonify({
+            "round_id": round_id,
+            "all_numbers_pool": number_sheet,
+            "zero_money_numbers": zero_money_numbers,
+            "highest_betted_number": highest_num,
+            "lowest_betted_number": lowest_num
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/admin/declare-result', methods=['POST'])
+def declare_result():
+    try:
+        data = request.get_json() or {}
+        now = get_ist_time()
+        round_id = data.get('round_id') or f"FD_{now.strftime('%Y%m%d')}"
+        manual_winner = data.get('winner_number')
+        
+        number_sheet = {str(i): 0.0 for i in range(1, 101)}
+        bets_list = list(db.bets.find({"round_id": round_id, "status": "pending"}))
+        
+        for bet in bets_list:
+            for num in bet.get('selected_numbers', []):
+                if str(num) in number_sheet:
+                    number_sheet[str(num)] += bet.get('amt_per_number', 0)
+
+        if manual_winner:
+            final_winner = str(manual_winner)
+        else:
+            zero_money_numbers = [num for num, amt in number_sheet.items() if amt == 0]
+            if zero_money_numbers:
+                final_winner = zero_money_numbers[0]
+            else:
+                final_winner = min(number_sheet, key=number_sheet.get)
+
+        db.results.update_one(
+            {"round_id": round_id},
+            {"$set": {"winner": int(final_winner), "declared_at": datetime.datetime.utcnow()}},
+            upsert=True
+        )
+
+        for bet in bets_list:
+            if int(final_winner) in bet.get('selected_numbers', []):
+                winning_amount = bet.get('amt_per_number', 0) * 95
+                db.users.update_one({"uid": bet['uid']}, {"$inc": {"balance": winning_amount}})
+                db.bets.update_one({"_id": bet['_id']}, {"$set": {"status": "WIN", "payout": winning_amount}})
+            else:
+                db.bets.update_one({"_id": bet['_id']}, {"$set": {"status": "LOSE", "payout": 0}})
+
+        return jsonify({"status": "success", "winner_declared": final_winner, "message": " !"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
