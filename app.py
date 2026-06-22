@@ -116,6 +116,30 @@ def login():
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+        # 📊 3. एडमिन ओवरव्यू के लिए सभी यूज़र्स का पूरा लाइव डेटा खींचने का API
+@app.route('/api/admin/all-users', methods=['POST'])
+def admin_all_users():
+    try:
+        # मोंगोडीबी के 'users' कलेक्शन से सारे यूज़र्स का पूरा डेटा उठाना
+        all_users_cursor = users_collection.find()
+        users_list = []
+        
+        for user in all_users_cursor:
+            users_list.append({
+                "uid": user.get('uid', '00000000'),
+                "first_name": user.get('first_name', 'Arena Player'),
+                "last_name": user.get('last_name', ''),
+                "mobile": user.get('mobile', ''),
+                "email": user.get('email', '--'),
+                "balance": user.get('balance', 0),
+                "status": user.get('status', 'ACTIVE')
+            })
+            
+        # सीपैनल टेबल को सारा डेटा लाइव रिस्पॉन्स में भेज देना
+        return jsonify({"success": True, "users": users_list}), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+        
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

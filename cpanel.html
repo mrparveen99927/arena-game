@@ -182,6 +182,26 @@
                     <p class="stat-val text-green">₹4,850</p>
                 </div>
             </div>
+            <!-- 🎯 सभी यूज़र्स का लाइव डेटा देखने के लिए सुंदर टेबल (खांचा) -->
+<div style="overflow-x: auto; margin-top: 15px; background: rgba(3, 7, 18, 0.4); padding: 10px; border-radius: 12px; border: 1px solid #1f2937;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; color: #e5e7eb;">
+        <thead>
+            <tr style="background-color: #1f2937; border-bottom: 2px solid #374151;">
+                <th style="padding: 10px;">UID</th>
+                <th style="padding: 10px;">नाम</th>
+                <th style="padding: 10px;">मोबाइल</th>
+                <th style="padding: 10px;">जीमेल आईडी</th>
+                <th style="padding: 10px;">बैलेंस</th>
+                <th style="padding: 10px;">स्टेटस</th>
+            </tr>
+        </thead>
+        <tbody id="render-all-users-table">
+            <!-- जावास्क्रिप्ट मोंगोडीबी से असली डेटा लाकर यहाँ अपने आप सजा देगी -->
+            <tr><td colspan="6" style="text-align: center; padding: 20px; color: #9ca3af;">डेटा लोड हो रहा है...</td></tr>
+        </tbody>
+    </table>
+</div>
+
         </div>
                 <!-- S2: WITHDRAWAL REQUESTS -->
         <div id="s-withdrawal" class="hidden">
@@ -614,6 +634,8 @@
                     <div style="font-size:22px; font-weight:900; color:#10b981; font-family:monospace;">${item.number}</div>
                 </div>
             `).join('');
+            fetchAllUsersToTable();
+            
         }
                 // डिपॉजिट अप्रूवल और रिजेक्शन एक्शन्स
         function processDeposit(id, approved) {
@@ -936,7 +958,40 @@
             alert("💳 खाता सेटल!\nएजेंट " + currentManagedAgent + " का बकाया कमीशन साफ़ कर दिया गया है। करंट ड्यूस: ₹0");
             if (typeof loadSystemData === 'function') { loadSystemData(); }
         }
-        
+        // 🔄 रेंडर सर्वर से यूज़र्स की लिस्ट खींचने और टेबल में सजाने का फ्रेश लाइव फंक्शन
+async function fetchAllUsersToTable() {
+    const tableBody = document.getElementById("render-all-users-table");
+    if (!tableBody) return;
+
+    try {
+        // यह कमांड आपके लाइव रेंडर बैकएंड सर्वर से सीधे बात करेगी
+        const response = await fetch(`${BACKEND_URL}/api/admin/all-users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success && data.users.length > 0) {
+            // मोंगोडीबी से मिले असली डेटा को लूप चलाकर टेबल की कतारों (Rows) में सजाना
+            tableBody.innerHTML = data.users.map(user => `
+                <tr style="border-bottom: 1px solid #1f2937; background-color: rgba(31, 41, 55, 0.2);">
+                    <td style="padding: 10px; font-family: monospace; color: #fbbf24; font-weight: bold;">${user.uid || '00000000'}</td>
+                    <td style="padding: 10px; font-weight: bold;">${user.first_name}</td>
+                    <td style="padding: 10px; font-family: monospace;">${user.mobile}</td>
+                    <td style="padding: 10px; color: #9ca3af;">${user.email || '--'}</td>
+                    <td style="padding: 10px; color: #10b981; font-weight: bold; font-family: monospace;">₹${parseFloat(user.balance).toFixed(2)}</td>
+                    <td style="padding: 10px;"><span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; ${user.status === 'BANNED' ? 'background: rgba(239,68,68,0.1); color: #ef4444;' : 'background: rgba(16,185,129,0.1); color: #10b981;'}">${user.status || 'ACTIVE'}</span></td>
+                </tr>
+            `).join('');
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6b7280;">डेटाबेस में कोई खिलाड़ी नहीं मिला!</td></tr>';
+        }
+    } catch (err) {
+        // यदि सर्वर ऑफलाइन हो या रास्ता न बना हो तो यह अलर्ट टेबल में दिखेगा
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">⚠️ लाइव डेटाबेस सर्वर से कनेक्शन फेल! (app.py में एपीआई रूट जोड़ें)</td></tr>';
+    }
+}
+
         
     </script>
 </body>
