@@ -116,14 +116,11 @@ def login():
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-        # 📊 3. एडमिन ओवरव्यू के लिए सभी यूज़र्स का पूरा लाइव डेटा खींचने का API
-@app.route('/api/admin/all-users', methods=['POST'])
+        @app.route('/api/admin/all-users', methods=['POST'])
 def admin_all_users():
     try:
-        # मोंगोडीबी के 'users' कलेक्शन से सारे यूज़र्स का पूरा डेटा उठाना
         all_users_cursor = users_collection.find()
         users_list = []
-        
         for user in all_users_cursor:
             users_list.append({
                 "uid": user.get('uid', '00000000'),
@@ -134,21 +131,19 @@ def admin_all_users():
                 "balance": user.get('balance', 0),
                 "status": user.get('status', 'ACTIVE')
             })
-            
-        # सीपैनल टेबल को सारा डेटा लाइव रिस्पॉन्स में भेज देना
         return jsonify({"success": True, "users": users_list}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-        import datetime
-import pytz
-import time
 
 def get_ist_time():
+    import datetime
+    import pytz
     return datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
 
 @app.route('/api/game-status', methods=['GET'])
 def get_game_status():
     try:
+        import datetime
         now = get_ist_time()
         time_5pm = now.replace(hour=17, minute=0, second=0, microsecond=0)
         time_440pm = now.replace(hour=16, minute=40, second=0, microsecond=0)
@@ -156,12 +151,12 @@ def get_game_status():
         
         if now < time_440pm:
             time_remaining = int((time_440pm - now).total_seconds())
-            return jsonify({"status": "OPEN", "round_id": round_id, "message": "  !", "time_remaining": time_remaining})
+            return jsonify({"status": "OPEN", "round_id": round_id, "message": "  !", "time_remaining": time_remaining}), 200
         elif time_440pm <= now < time_5pm:
             time_remaining = int((time_5pm - now).total_seconds())
-            return jsonify({"status": "CLOSED", "round_id": round_id, "message": " !    ...", "time_remaining": time_remaining})
+            return jsonify({"status": "CLOSED", "round_id": round_id, "message": " !    ...", "time_remaining": time_remaining}), 200
         else:
-            return jsonify({"status": "RESULT_DECLARED", "round_id": round_id, "message": "       "})
+            return jsonify({"status": "RESULT_DECLARED", "round_id": round_id, "message": "        "}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
@@ -197,6 +192,7 @@ def get_admin_dashboard_sheet():
 @app.route('/api/admin/declare-result', methods=['POST'])
 def declare_result():
     try:
+        import datetime
         data = request.get_json() or {}
         now = get_ist_time()
         round_id = data.get('round_id') or f"FD_{now.strftime('%Y%m%d')}"
@@ -215,7 +211,7 @@ def declare_result():
         else:
             zero_money_numbers = [num for num, amt in number_sheet.items() if amt == 0]
             if zero_money_numbers:
-                final_winner = zero_money_numbers[0]
+                final_winner = zero_money_numbers[0] #    
             else:
                 final_winner = min(number_sheet, key=number_sheet.get)
 
@@ -233,13 +229,12 @@ def declare_result():
             else:
                 db.bets.update_one({"_id": bet['_id']}, {"$set": {"status": "LOSE", "payout": 0}})
 
-        return jsonify({"status": "success", "winner_declared": final_winner, "message": " !"})
+        return jsonify({"status": "success", "winner_declared": final_winner, "message": " !"}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-
-
 if __name__ == '__main__':
+    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
     
