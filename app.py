@@ -1,11 +1,12 @@
 import os
+import random
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-# CORS पूरी तरह अनलॉक ताकि फ्रंटएंड से कनेक्शन में कोई ब्लॉक न आए
+# CORS पूरी तरह अनलॉक ताकि फ्रंटएंड कनेक्शन में कोई रुकावट न आए
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # आपका लाइव MongoDB कनेक्शन लिंक
@@ -23,7 +24,7 @@ except Exception as e:
 def home():
     return jsonify({"status": "running", "message": "N&N Alpha Arena Backend Server is Live!"})
 
-# 📝 रजिस्ट्रेशन API
+# 📝 1. रजिस्ट्रेशन API (UID जनरेशन लॉजिक के साथ)
 @app.route('/api/register', methods=['POST'])
 def register():
     try:
@@ -33,24 +34,23 @@ def register():
 
         first_name = data.get('firstName')
         last_name = data.get('lastName')
-        mobile = str(data.get('mobile')).strip() # मोबाइल नंबर को टेक्स्ट में बदलकर स्पेस हटाना
-        email = str(data.get('email')).strip().lower() # ईमेल को छोटे अक्षरों में बदलना
+        mobile = str(data.get('mobile')).strip()
+        email = str(data.get('email')).strip().lower()
         password = data.get('password')
         referral = data.get('referral', '')
 
-        # डेटाबेस में पहले से मौजूद मोबाइल या ईमेल चेक करना
         if users_collection.find_one({"mobile": mobile}):
             return jsonify({"success": False, "message": "यह मोबाइल नंबर पहले से रजिस्टर्ड है!"}), 400
         if users_collection.find_one({"email": email}):
             return jsonify({"success": False, "message": "यह ईमेल आईडी पहले से रजिस्टर्ड है!"}), 400
 
-        # पासवर्ड सुरक्षित करना
         hashed_password = generate_password_hash(password)
-        
-random_uid = str(random.randint(10000000, 99999999))
+
+        # 🎯 रेंडर क्रैश एरर को यहाँ पूरी तरह फिक्स कर दिया गया है
+        generated_uid = str(random.randint(10000000, 99999999))
 
         new_user = {
-           "uid": random_uid,
+            "uid": generated_uid,
             "first_name": first_name,
             "last_name": last_name,
             "mobile": mobile,
@@ -58,6 +58,7 @@ random_uid = str(random.randint(10000000, 99999999))
             "password": hashed_password,
             "referral_id": referral,
             "balance": 0,
+            "bonus_claimed": False,
             "role": "user"
         }
 
@@ -67,7 +68,7 @@ random_uid = str(random.randint(10000000, 99999999))
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-# 🔑 लॉगिन API
+# 🔑 2. लॉगिन API (UID रिस्पॉन्स लॉजिक के साथ)
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
@@ -75,10 +76,9 @@ def login():
         if not data:
             return jsonify({"success": False, "message": "डेटा नहीं मिला!"}), 400
 
-        login_id = str(data.get('loginId')).strip() # इनपुट से स्पेस हटाना
+        login_id = str(data.get('loginId')).strip()
         password = data.get('password')
 
-        # मोबाइल नंबर या ईमेल आईडी दोनों फॉर्मेट में डेटाबेस में खोजना
         user = users_collection.find_one({
             "$or": [
                 {"mobile": login_id},
@@ -89,12 +89,27 @@ def login():
         if not user:
             return jsonify({"success": False, "message": "अकाउंट नहीं मिला! कृपया पहले सही रजिस्ट्रेशन करें।"}), 404
 
-        # पासवर्ड मैच करना
         if check_password_hash(user['password'], password):
+            current_balance = user.get('balance', 0)
+            bonus_given = 0
+            
+            if not user.get('bonus_claimed', False):
+                bonus_given = random.randint(1, 50)
+                current_balance += bonus_given
+                users_collection.update_one(
+                    {"_id": user["_id"]},
+                    {"$set": {"balance": current_balance, "bonus_claimed": True}}
+                )
+
             return jsonify({
                 "success": True, 
                 "message": "Login Successful!",
-              "user": {"uid": user.get('uid', '00000000'), "first_name": user['first_name'], "mobile": user['mobile']}
+                "user": {
+                    "uid": user.get('uid', '00000000'),
+                    "first_name": user['first_name'],
+                    "mobile": user['mobile'],
+                    "balance": current_balance
+                }
             }), 200
         else:
             return jsonify({"success": False, "message": "गलत पासवर्ड!"}), 401
