@@ -187,6 +187,45 @@
         alert("Database server connection failed. Please check your Render server.");
     }
 });
+// 📝 3. NEW REGISTRATION FORM HANDLING CODE
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const mobileInput = document.querySelector('#registerForm input[name="mobile"]')?.value.trim() || "";
+    const passwordInput = document.querySelector('#registerForm input[name="password"]')?.value.trim() || "";
+
+    if (!mobileInput || !passwordInput) {
+        alert("Please enter both mobile number and password.");
+        return;
+    }
+
+    try {
+        const response = await fetch("https://arena-backen.onrender.com", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: mobileInput,
+                password: passwordInput
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            localStorage.setItem("game_username", data.username);
+            localStorage.setItem("game_balance", data.balance);
+            alert("Registration successful! New account added.");
+            window.location.href = 'templates_dashboard.html';
+        } else {
+            alert("Registration failed: " + data.message);
+        }
+    } catch (error) {
+        console.error("Server Error:", error);
+        alert("Database server connection failed. Please check your Render server.");
+    }
+});
 
         
     </script>
