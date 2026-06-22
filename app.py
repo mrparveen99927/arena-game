@@ -1,69 +1,104 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pymongo import MongoClient
-import os
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+# 🎯 CORS पूरी तरह अनलॉक ताकि फ्रंटएंड से कनेक्शन फेल न हो
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-MONGO_URI = os.getenv("MONGO_URI")
+# 🔐 आपका लाइव MongoDB कनेक्शन लिंक
+MONGO_URI = "mongodb+srv://arena_user:Arena999@cluster0.pluvfcd.mongodb.net/?appName=Cluster0"
 
 try:
     client = MongoClient(MONGO_URI)
-    db = client['arena_game_db']
-    users_collection = db['users']
-    deposits_collection = db['deposits']
-    cashouts_collection = db['cashouts']
-    print("MongoDB Connected Successfully!  ")
+    db = client['alpha_arena_db'] # आपके डेटाबेस का नाम
+    users_collection = db['users'] # यूजर्स का टेबल/कलेक्शन
+    print("MongoDB Connected Successfully!")
 except Exception as e:
-    print(f"Database Connection Error: {e}")
+    print(f"MongoDB Connection Error: {e}")
 
 @app.route('/')
 def home():
-    return "N&N ALPHA ARENA API SERVER IS RUNNING!"
+    return jsonify({"status": "running", "message": "N&N Alpha Arena Backend Server is Live!"})
 
-@app.route('/api/auth', methods=['POST'])
-def user_auth():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
-    if not username or not password:
-        return jsonify({"success": False, "message": "सभी फ़ील्ड ज़रूरी हैं।"}), 400
-        
-    user = users_collection.find_one({"username": username})
-    
-    if user:
-        if user['password'] == password:
-            return jsonify({"success": True, "type": "login", "username": username, "balance": user.get('balance', 0)})
+# 📝 रजिस्ट्रेशन API
+@app.route('/api/register', methods=['POST'])
+def register():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"success": False, "message": "डेटा नहीं मिला!"}), 400
+
+        first_name = data.get('firstName')
+        last_name = data.get('lastName')
+        mobile = data.get('mobile')
+        email = data.get('email')
+        password = data.get('password')
+        referral = data.get('referral', '')
+
+        # डेटाबेस में पहले से मौजूद मोबाइल या ईमेल चेक करना
+        if users_collection.find_one({"mobile": mobile}):
+            return jsonify({"success": False, "message": "यह मोबाइल नंबर पहले से रजिस्टर्ड है!"}), 400
+        if users_collection.find_one({"email": email}):
+            return jsonify({"success": False, "message": "यह ईमेल आईडी पहले से रजिस्टर्ड है!"}), 400
+
+        # पासवर्ड सुरक्षित करना
+        hashed_password = generate_password_hash(password)
+
+        new_user = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "mobile": mobile,
+            "email": email,
+            "password": hashed_password,
+            "referral_id": referral,
+            "balance": 0,
+            "role": "user"
+        }
+
+        users_collection.insert_one(new_user)
+        return jsonify({"success": True, "message": "Registration Successful!"}), 201
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# 🔑 लॉगिन API
+@app.route('/api/login', methods=['POST'])
+def login():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"success": False, "message": "डेटा नहीं मिला!"}), 400
+
+        login_id = data.get('loginId')
+        password = data.get('password')
+
+        # मोबाइल या ईमेल दोनों से खोजना
+        user = users_collection.find_one({
+            "$or": [
+                {"mobile": login_id},
+                {"email": login_id}
+            ]
+        })
+
+        if not user:
+            return jsonify({"success": False, "message": "अकाउंट नहीं मिला!"}), 44
+
+        if check_password_hash(user['password'], password):
+            return jsonify({
+                "success": True, 
+                "message": "Login Successful!",
+                "user": {"first_name": user['first_name'], "mobile": user['mobile']}
+            }), 200
         else:
-            return jsonify({"success": False, "message": "गलत पासवर्ड!"})
-    else:
-        # नया यूजर ऑटोमैटिक रजिस्टर होगा ₹0 बैलेंस के साथ
-        users_collection.insert_one({"username": username, "password": password, "balance": 0})
-        return jsonify({"success": True, "type": "register", "username": username, "balance": 0})
+            return jsonify({"success": False, "message": "गलत पासवर्ड!"}), 401
 
-# 2. cPanel के लिए: सभी यूज़र्स का डेटा देखने की API
-@app.route('/api/admin/users', methods=['GET'])
-def get_all_users():
-    users = list(users_collection.find({}, {"_id": 0}))
-    return jsonify({"success": True, "users": users})
-
-# 3. cPanel के लिए: यूज़र बैलेंस अपडेट करने की API (डिपॉजिट/कैशआउट अप्रूवल)
-@app.route('/api/admin/update-balance', methods=['POST'])
-def update_balance():
-    data = request.json
-    username = data.get('username')
-    amount = float(data.get('amount')) # अमाउंट प्लस या माइनस हो सकता है
-    
-    user = users_collection.find_one({"username": username})
-    if not user:
-        return jsonify({"success": False, "message": "यूज़र नहीं मिला।"}), 404
-        
-    new_balance = user.get('balance', 0) + amount
-    users_collection.update_one({"username": username}, {"$set": {"balance": new_balance}})
-    return jsonify({"success": True, "new_balance": new_balance})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
     
