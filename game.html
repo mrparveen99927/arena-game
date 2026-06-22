@@ -210,7 +210,7 @@ async function submitFinalBetToDB() {
     }
 
     try {
-        const response = await fetch(`https://onrender.com`, {
+        const response = await fetch(`https://arena-backen.onrender.com`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -247,7 +247,7 @@ async function submitFinalBetToDB() {
 async function syncDatabaseWallet() {
     const playerUID = sessionStorage.getItem('uid') || localStorage.getItem('uid') || "admin"; 
     try {
-        const response = await fetch(`https://onrender.com{playerUID}`);
+        const response = await fetch(`https://arena-backen.onrender.com{playerUID}`);
         const userData = await response.json();
         if (userData && userData.balance !== undefined) {
             walletCoins = parseFloat(userData.balance);
