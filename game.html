@@ -39,7 +39,7 @@
     <div class="app-container">
         <div class="top-bar">
             <div class="top-left"><a href="templates_dashboard.html" class="back-arrow">⬅️</a><span class="page-title">Faridabad Arena (Class A)</span></div>
-            <div class="balance-strip">💎 <span id="currentWallet">1250</span> Coins</div>
+            <div class="balance-strip">💎 <span id="currentWallet">0</span> Coins</div>
         </div>
         <div class="chart-section">
             <p class="chart-title">📊 Faridabad Past Chart</p>
@@ -64,151 +64,204 @@
         </div>
         <div class="input-row">
             <input type="number" id="coinInput" oninput="calcTotal()" placeholder="Per No: ₹5 - ₹100" min="5" max="100" class="bet-input">
-            <button onclick="confirmBet()" class="btn-confirm">Confirm Bet</button>
+           <button onclick="openBetSummaryModal()" class="btn-confirm">Confirm Bet</button>
         </div>
     </div>
-    <script>
-            // =======  1:          =======
-        function syncAdminLiveResult() {
-            //         
-            var liveData = JSON.parse(localStorage.getItem('nn_current_game'));
-            
-            if (liveData && liveData.name && liveData.number) {
-                var marketName = liveData.name.toUpperCase(); // : FARIDABAD, GALI
-                var winNum = liveData.number;
-
-                //  game.html       
-                // (            )
-                var marketBoxId = "";
-                if (marketName.indexOf("FARIDABAD") > -1) marketBoxId = "res-fabad";
-                else if (marketName.indexOf("GHAZIABAD") > -1) marketBoxId = "res-gzbad";
-                else if (marketName.indexOf("GALI") > -1) marketBoxId = "res-gali";
-                else if (marketName.indexOf("DISAWER") > -1) marketBoxId = "res-dsawr";
-
-                //         ,    
-                var targetBox = document.getElementById(marketBoxId);
-                if (targetBox) {
-                    targetBox.innerText = winNum;
-                    targetBox.style.color = "#10b981"; //       
-                    targetBox.style.fontWeight = "900";
-                }
-            }
-        }
-
-        //  3        - 
-        setInterval(syncAdminLiveResult, 3000);
-                // =======  2: 95x       =======
-        var lastCheckedMarketResult = ""; // -          
-
-        function checkAndDistribute95xProfit() {
-            var liveData = JSON.parse(localStorage.getItem('nn_current_game'));
-            if (!liveData || !liveData.name || !liveData.number) return;
-
-            var marketKey = liveData.name.toUpperCase();
-            var winningNum = parseInt(liveData.number, 10);
-            
-            //     (: FARIDABAD_56)           
-            var currentResultKey = marketKey + "_" + winningNum;
-            if (lastCheckedMarketResult === currentResultKey) return; 
-
-            //       (    'current_player_id'    )
-            //        ,        'User_8821'   
-            var currentPlayer = localStorage.getItem('current_player_id') || "User_8821";
-
-            //       
-            var allBets = JSON.parse(localStorage.getItem('nn_user_bets')) || [];
-            var playerAccounts = JSON.parse(localStorage.getItem('nn_users_accounts')) || {};
-
-            var totalWinAmount = 0;
-            var wonAnyBet = false;
-
-            //           
-            for (var i = 0; i < allBets.length; i++) {
-                var bet = allBets[i];
-                //          ,         ?
-                if (bet.user === currentPlayer && bet.market.toUpperCase() === marketKey && parseInt(bet.number, 10) === winningNum) {
-                    var winReward = bet.amount * 95; // 95   
-                    totalWinAmount += winReward;
-                    wonAnyBet = true;
-                }
-            }
-
-            //     ,       
-            if (wonAnyBet && totalWinAmount > 0) {
-                if (playerAccounts[currentPlayer]) {
-                    playerAccounts[currentPlayer].balance += totalWinAmount;
-                } else {
-                    playerAccounts[currentPlayer] = { balance: totalWinAmount, status: "ACTIVE" };
-                }
-
-                //     
-                localStorage.setItem('nn_users_accounts', JSON.stringify(playerAccounts));
-                
-                //           ( game.html  'player-balance'  )
-                var balanceBox = document.getElementById('player-balance');
-                if (balanceBox) {
-                    balanceBox.innerText = "" + playerAccounts[currentPlayer].balance;
-                }
-
-                //    - 
-                alert(" WINNER OUT! \n  ! " + marketKey + "    [" + winningNum + "]   \n95x    " + totalWinAmount + "        !");
-            }
-
-            //            
-            lastCheckedMarketResult = currentResultKey;
-        }
-
-        //  3     -  
-        setInterval(checkAndDistribute95xProfit, 3000);
+    <!--    - (Modal) -->
+<div id="betSummaryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+    <div style="background: #1a1f2c; border: 2px solid #a855f7; border-radius: 12px; width: 100%; max-width: 400px; padding: 20px; color: #fff; box-shadow: 0 4px 20px rgba(168,85,247,0.4);">
+        <h3 style="text-align: center; color: #a855f7; font-size: 20px; margin-bottom: 15px; font-weight: bold;"> Bet Slip Review</h3>
         
-        var selectedArr = []; var walletCoins = 1250;
-        var grid = document.getElementById("matrixGrid");
-        for (var i = 1; i <= 100; i++) {
-            var btn = document.createElement("button"); btn.className = "num-btn"; btn.innerText = i; btn.id = "nBtn_" + i;
-            btn.setAttribute("onclick", "toggleNum(" + i + ")"); grid.appendChild(btn);
+        <div style="margin-bottom: 12px; border-bottom: 1px solid #2d3748; padding-bottom: 8px;">
+            <p style="font-size: 14px; color: #94a3b8;">   :</p>
+            <p id="popTotalNumbers" style="font-size: 18px; font-weight: bold; color: #fff;">0</p>
+        </div>
+        
+        <div style="margin-bottom: 12px; border-bottom: 1px solid #2d3748; padding-bottom: 8px;">
+            <p style="font-size: 14px; color: #94a3b8;">    :</p>
+            <p id="popSelectedList" style="font-size: 14px; font-weight: bold; color: #34d399; word-break: break-all; max-height: 60px; overflow-y: auto;">None</p>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <p style="font-size: 14px; color: #94a3b8;">    ():</p>
+            <input type="number" id="popCoinInput" oninput="recalcPopTotal()" style="width: 100%; padding: 10px; background: #0f172a; border: 1px solid #475569; border-radius: 6px; color: #fff; font-size: 16px; font-weight: bold; text-align: center; margin-top: 5px;">
+        </div>
+
+        <div style="margin-bottom: 20px; background: #2d3748; padding: 12px; border-radius: 8px; text-align: center;">
+            <p style="font-size: 14px; color: #cbd5e1; margin: 0;">   :</p>
+            <p style="font-size: 24px; font-weight: bold; color: #e11d48; margin: 5px 0 0 0;"><span id="popTotalBet">0</span></p>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button onclick="closeBetModal()" style="flex: 1; background: #475569; color: #fff; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;"> Cancel</button>
+            <button onclick="submitFinalBetToDB()" style="flex: 1; background: #22c55e; color: #fff; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;"> Confirm Bet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ======= 1.        =======
+var selectedArr = []; 
+var walletCoins = 0; 
+var grid = document.getElementById("matrixGrid");
+
+// 1  100      - 
+if (grid) {
+    grid.innerHTML = ""; 
+    for (var i = 1; i <= 100; i++) {
+        var btn = document.createElement("button"); 
+        btn.className = "num-btn"; 
+        btn.innerText = i; 
+        btn.id = "nBtn_" + i;
+        btn.setAttribute("onclick", "toggleNum(" + i + ")"); 
+        grid.appendChild(btn);
+    }
+}
+
+function toggleNum(num) {
+    var btn = document.getElementById("nBtn_" + num); 
+    if(!btn) return;
+    var idx = selectedArr.indexOf(num);
+    if (idx === -1) { selectedArr.push(num); btn.classList.add("selected-num"); }
+    else { selectedArr.splice(idx, 1); btn.classList.remove("selected-num"); }
+    selectedArr.sort(function(a,b){return a-b;}); 
+    updateUI();
+}
+
+function quickSelect(type) {
+    clearAll();
+    for (var i = 1; i <= 100; i++) {
+        var btn = document.getElementById("nBtn_" + i);
+        if(!btn) continue;
+        if (type=='all' || (type=='even' && i%2===0) || (type=='odd' && i%2!==0)) { 
+            selectedArr.push(i); 
+            btn.classList.add("selected-num"); 
         }
-        function toggleNum(num) {
-            var btn = document.getElementById("nBtn_" + num); var idx = selectedArr.indexOf(num);
-            if (idx === -1) { selectedArr.push(num); btn.classList.add("selected-num"); }
-            else { selectedArr.splice(idx, 1); btn.classList.remove("selected-num"); }
-            selectedArr.sort(function(a,b){return a-b;}); updateUI();
-        }
-        function quickSelect(type) {
+    }
+    updateUI();
+}
+
+function clearAll() {
+    selectedArr = []; 
+    for (var i = 1; i <= 100; i++) { 
+        var btn = document.getElementById("nBtn_" + i);
+        if(btn) btn.classList.remove("selected-num"); 
+    }
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById("selectedCount").innerText = selectedArr.length;
+    document.getElementById("selectedDisplay").innerText = (selectedArr.length === 0) ?
+    "Selected Numbers: None" : "Selected Numbers: " + selectedArr.join(", ");
+    calcTotal();
+}
+
+function calcTotal() {
+    var amt = document.getElementById("coinInput").value; 
+    var txt = document.getElementById("totalBet");
+    if (!amt || amt <= 0 || selectedArr.length === 0) { txt.innerText = "0"; return 0; }
+    var total = selectedArr.length * parseInt(amt); 
+    txt.innerText = total; 
+    return total;
+}
+
+// ======= 2.   -   (   ) =======
+function openBetSummaryModal() {
+    var amtPerNumber = parseInt(document.getElementById("coinInput").value);
+    
+    if (selectedArr.length === 0) { alert("      !"); return; }
+    if (!amtPerNumber || isNaN(amtPerNumber)) { alert("      !"); return; }
+    
+    //            (5  100)
+    if (amtPerNumber < 5 || amtPerNumber > 100) { 
+        alert("     5  100    !"); 
+        return; 
+    }
+
+    document.getElementById("popTotalNumbers").innerText = selectedArr.length;
+    document.getElementById("popSelectedList").innerText = selectedArr.join(", ");
+    document.getElementById("popCoinInput").value = amtPerNumber;
+    
+    recalcPopTotal();
+    document.getElementById("betSummaryModal").style.display = "flex";
+}
+
+function recalcPopTotal() {
+    var popAmt = parseInt(document.getElementById("popCoinInput").value) || 0;
+    var finalTotal = selectedArr.length * popAmt;
+    document.getElementById("popTotalBet").innerText = finalTotal;
+}
+
+function closeBetModal() {
+    document.getElementById("betSummaryModal").style.display = "none";
+}
+
+// ======= 3.  Confirm       =======
+async function submitFinalBetToDB() {
+    var popAmt = parseInt(document.getElementById("popCoinInput").value);
+    var finalTotal = selectedArr.length * popAmt;
+    const playerUID = sessionStorage.getItem('uid') || localStorage.getItem('uid') || "admin";
+
+    if (popAmt < 5 || popAmt > 100) { alert("    5  100    !"); return; }
+    if (finalTotal > walletCoins) { 
+        alert("  !   " + finalTotal + "       " + walletCoins + "  "); 
+        return; 
+    }
+
+    try {
+        const response = await fetch(`https://onrender.com`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                uid: playerUID,
+                prediction: "95X_MATRIX",
+                amount: finalTotal,
+                amt_per_number: popAmt,
+                selected_numbers: selectedArr,
+                round_id: localStorage.getItem('current_round_id') || "ROUND_01"
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.status === "success") {
+            walletCoins = result.new_balance;
+            document.getElementById("currentWallet").innerText = walletCoins;
+            
+            alert(`  !      \n   ${finalTotal}    `);
+            
+            document.getElementById("coinInput").value = "";
+            closeBetModal();
             clearAll();
-            for (var i = 1; i <= 100; i++) {
-                var btn = document.getElementById("nBtn_" + i);
-                if (type=='all' || (type=='even' && i%2===0) || (type=='odd' && i%2!==0)) { selectedArr.push(i); btn.classList.add("selected-num"); }
-            }
-            updateUI();
+        } else {
+            alert(" : " + (result.message || "     "));
         }
-        function clearAll() {
-            selectedArr = []; for (var i = 1; i <= 100; i++) { document.getElementById("nBtn_" + i).classList.remove("selected-num"); }
-            updateUI();
+    } catch (err) {
+        console.error("Database Bet Error:", err);
+        alert("        !");
+    }
+}
+
+// ======= 4.         =======
+async function syncDatabaseWallet() {
+    const playerUID = sessionStorage.getItem('uid') || localStorage.getItem('uid') || "admin"; 
+    try {
+        const response = await fetch(`https://onrender.com{playerUID}`);
+        const userData = await response.json();
+        if (userData && userData.balance !== undefined) {
+            walletCoins = parseFloat(userData.balance);
+            document.getElementById("currentWallet").innerText = walletCoins;
         }
-        function updateUI() {
-            document.getElementById("selectedCount").innerText = selectedArr.length;
-            document.getElementById("selectedDisplay").innerText = (selectedArr.length === 0) ? "Selected Numbers: None" : "Selected Numbers: " + selectedArr.join(", ");
-            calcTotal();
-        }
-        function calcTotal() {
-            var amt = document.getElementById("coinInput").value; var txt = document.getElementById("totalBet");
-            if (!amt || amt <= 0 || selectedArr.length === 0) { txt.innerText = "0"; return 0; }
-            var total = selectedArr.length * parseInt(amt); txt.innerText = total; return total;
-        }
-        function confirmBet() {
-            var total = calcTotal(); var amt = parseInt(document.getElementById("coinInput").value);
-            if (selectedArr.length === 0) { alert("❌ Select at least one number!"); return; }
-            if (!amt || isNaN(amt)) { alert("❌ Enter valid coins per number!"); return; }
-            
-            // 🛡️ प्रति नंबर दांव की सीमा: ₹5 से ₹100
-            if (amt < 5) { alert("❌ Minimum bet amount per number is ₹5!"); return; }
-            if (amt > 100) { alert("❌ Maximum bet amount per number is ₹100!"); return; }
-            
-            if (total > walletCoins) { alert("❌ Insufficient Balance! Total bet is ₹" + total + " but you have 💎" + walletCoins + " coins."); return; }
-            walletCoins -= total; document.getElementById("currentWallet").innerText = walletCoins;
-            alert("✅ Bet Accepted!\n\nNumbers Bet: " + selectedArr.length + "\nAmt Per Number: ₹" + amt + "\nTotal Deducted: ₹" + total);
-            document.getElementById("coinInput").value = ""; clearAll();
-        }
-    </script>
+    } catch (err) {
+        console.error("  :", err);
+    }
+}
+
+//       
+window.addEventListener('DOMContentLoaded', function() {
+    syncDatabaseWallet();
+});
+</script>
 </body>
 </html>
