@@ -1,83 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>N&N Alpha Arena - Dashboard</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        html, body { background-color: #080710; color: #e5e7eb; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
-        body { display: flex; justify-content: center; align-items: flex-start; }
-        .app-container { width: 100%; max-width: 380px; height: 100vh; background-color: #111827; padding: 15px; padding-bottom: 140px; overflow-y: scroll; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-        .banner-ad { width: 100%; height: 90px; background: linear-gradient(135deg, #1e1b4b, #2563eb); border-radius: 14px; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; border: 1px dashed #3b82f6; margin: 5px 0 12px 0; }
-        .sliding-bar { width: 100%; background-color: #030712; padding: 8px 10px; border-radius: 8px; border: 1px solid #1f2937; overflow: hidden; margin-bottom: 18px; display: flex; align-items: center; }
-        .sliding-bar span { background-color: #a855f7; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-right: 8px; white-space: nowrap; }
-        marquee { font-size: 12px; color: #e5e7eb; }
-        .section-title { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-weight: bold; text-align: left; }
-        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
-        .game-box { background: linear-gradient(135deg, #111827, #1f2937); border: 1px solid #374151; border-radius: 16px; padding: 14px 10px; text-align: center; cursor: pointer; position: relative; overflow: hidden; }
-        .game-box::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: #a855f7; }
-        .game-title { font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 4px; }
-        .game-time { font-size: 10px; color: #a855f7; font-weight: 600; margin-bottom: 6px; }
-        .game-result { font-size: 16px; font-weight: 800; color: #22c55e; font-family: monospace; margin-bottom: 4px; }
-        .game-status { font-size: 9px; color: #9ca3af; text-transform: uppercase; }
-        .quiz-container { background-color: #030712; border: 1px solid #1f2937; border-radius: 18px; padding: 15px; margin-bottom: 30px; width: 100%; }
-        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .quiz-header h4 { font-size: 13px; color: #ffffff; font-weight: bold; }
-        .quiz-header span { font-size: 10px; background-color: #16a34a; color: white; padding: 3px 8px; border-radius: 5px; font-weight: bold; }
-        .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-        .quiz-btn { width: 100%; padding: 16px 10px; border-radius: 12px; border: none; font-size: 15px; font-weight: 900; color: white; cursor: pointer; }
-        .quiz-btn.small-btn { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
-        .quiz-btn.big-btn { background: linear-gradient(135deg, #b91c1c, #dc2626); }
-        .quiz-btn p { font-size: 10px; color: rgba(255, 255, 255, 0.8); font-weight: normal; margin-top: 3px; }
-        .bottom-fixed-zone { position: fixed; bottom: 55px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 356px; display: flex; flex-direction: column; gap: 8px; z-index: 999999 !important; }
-        .bottom-nav { width: 100%; background-color: #030712 !important; border: 2px solid #1f2937; display: grid; grid-template-columns: repeat(5, 1fr); padding: 10px 0; border-radius: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: none; border: none; color: #9ca3af; text-decoration: none; }
-        .nav-item:active { transform: scale(0.92); }
-        .nav-icon { font-size: 18px; margin-bottom: 2px; }
-        .nav-text { font-size: 9px; font-weight: bold; }
-        .nav-item.active-nav { color: #a855f7; }
-        .nav-item.active-wheel .nav-icon { animation: spin 4s linear infinite; color: #eab308; }
-        .nav-item.active-refer .nav-icon { animation: bounce 2s infinite; color: #ec4899; }
-        .bottom-ad-banner { width: 100%; height: 50px; background: linear-gradient(135deg, #111827, #1f2937); border-radius: 12px; border: 1px dashed #4b5563; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: #9ca3af; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>N&N Alpha Arena - Dashboard</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+html, body { background-color: #080710; color: #e5e7eb; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+body { display: flex; justify-content: center; align-items: flex-start; }
+.app-container { width: 100%; max-width: 380px; height: 100vh; background-color: #111827; padding: 15px; padding-bottom: 140px; overflow-y: scroll; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+
+/*        */
+.wallet-box { background: linear-gradient(135deg, #10b981, #059669); padding: 14px; border-radius: 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #34d399; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
+.wallet-title { font-size: 13px; font-weight: bold; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
+.wallet-amount { font-size: 20px; font-weight: 800; color: white; font-family: monospace; }
+
+.banner-ad { width: 100%; height: 90px; background: linear-gradient(135deg, #1e1b4b, #2563eb); border-radius: 14px; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; border: 1px dashed #3b82f6; margin: 5px 0 12px 0; }
+.sliding-bar { width: 100%; background-color: #030712; padding: 8px 10px; border-radius: 8px; border: 1px solid #1f2937; overflow: hidden; margin-bottom: 18px; display: flex; align-items: center; }
+.sliding-bar span { background-color: #a855f7; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-right: 8px; white-space: nowrap; }
+marquee { font-size: 12px; color: #e5e7eb; }
+.section-title { font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-weight: bold; text-align: left; }
+
+.game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+.game-box { background: linear-gradient(135deg, #111827, #1f2937); border: 1px solid #374151; border-radius: 16px; padding: 14px 10px; text-align: center; cursor: pointer; position: relative; overflow: hidden; }
+.game-box::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background-color: #a855f7; }
+.game-title { font-size: 14px; font-weight: bold; color: #ffffff; margin-bottom: 4px; }
+.game-time { font-size: 10px; color: #a855f7; font-weight: 600; margin-bottom: 6px; }
+.game-result { font-size: 16px; font-weight: 800; color: #22c55e; font-family: monospace; margin-bottom: 4px; }
+.game-status { font-size: 9px; color: #9ca3af; text-transform: uppercase; }
+
+.quiz-container { background-color: #030712; border: 1px solid #1f2937; border-radius: 18px; padding: 15px; margin-bottom: 30px; width: 100%; }
+.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.quiz-header h4 { font-size: 13px; color: #ffffff; font-weight: bold; }
+.quiz-header span { font-size: 10px; background-color: #16a34a; color: white; padding: 3px 8px; border-radius: 5px; font-weight: bold; }
+.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.quiz-btn { width: 100%; padding: 16px 10px; border-radius: 12px; border: none; font-size: 15px; font-weight: 900; color: white; cursor: pointer; }
+.quiz-btn.small-btn { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+.quiz-btn.big-btn { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+.quiz-btn p { font-size: 10px; color: rgba(255, 255, 255, 0.8); font-weight: normal; margin-top: 3px; }
+
+.bottom-fixed-zone { position: fixed; bottom: 55px; left: 50%; transform: translateX(-50%); width: calc(100% - 24px); max-width: 356px; display: flex; flex-direction: column; gap: 8px; z-index: 999999 !important; }
+.bottom-nav { width: 100%; background-color: #030712 !important; border: 2px solid #1f2937; display: grid; grid-template-columns: repeat(5, 1fr); padding: 10px 0; border-radius: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: none; border: none; color: #9ca3af; text-decoration: none; }
+.nav-item:active { transform: scale(0.92); }
+.nav-icon { font-size: 18px; margin-bottom: 2px; }
+.nav-text { font-size: 9px; font-weight: bold; }
+.nav-item.active-nav { color: #a855f7; }
+.nav-item.active-wheel .nav-icon { animation: spin 4s linear infinite; color: #eab308; }
+.nav-item.active-refer .nav-icon { animation: bounce 2s infinite; color: #ec4899; }
+.bottom-ad-banner { width: 100%; height: 50px; background: linear-gradient(135deg, #111827, #1f2937); border-radius: 12px; border: 1px dashed #4b5563; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: #9ca3af; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/*        -  */
+.bet-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000000; }
+.popup-content { background: #1f2937; border: 1px solid #374151; padding: 20px; border-radius: 16px; width: 90%; max-width: 320px; text-align: center; }
+.popup-title { font-size: 18px; font-weight: bold; color: #38bdf8; margin-bottom: 15px; text-transform: uppercase; }
+.bet-input { width: 100%; padding: 12px; background: #030712; border: 1px solid #4b5563; border-radius: 8px; color: white; text-align: center; font-size: 18px; margin-bottom: 15px; outline: none; }
+.popup-btns { display: flex; gap: 10px; }
+.popup-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.confirm-btn { background: #10b981; color: white; }
+.cancel-btn { background: #ef4444; color: white; }
+.hidden { display: none !important; }
+</style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="sliding-bar"><span>NOTICE</span><marquee behavior="scroll" direction="left">Welcome to N&N Alpha Arena! Invite friends to earn Spin Rewards from ₹1 to ₹10!</marquee></div>
-        <div class="banner-ad">🖼️ TOP BANNER ADVERTISEMENT SPACE</div>
-        <h3 class="section-title">Live Game Markets</h3>
-        <div class="game-grid">
-            <!-- 🌟 ये हैं चारों पक्के जुड़े हुए लिंक्स -->
-            <div class="game-box" onclick="location.href='game.html?market=Faridabad'"><p class="game-title">Faridabad</p><p class="game-time">🕒 06:00 PM</p><p class="game-result">78</p><p class="game-status">Result Out</p></div>
-            <div class="game-box" onclick="location.href='game.html?market=Ghaziabad'"><p class="game-title">Ghaziabad</p><p class="game-time">🕒 08:30 PM</p><p class="game-result">45</p><p class="game-status">Result Out</p></div>
-            <div class="game-box" onclick="location.href='game.html?market=Gali'"><p class="game-title">Gali</p><p class="game-time">🕒 11:30 PM</p><p class="game-result">--</p><p class="game-status">Open</p></div>
-            <div class="game-box" onclick="location.href='game.html?market=Disawer'"><p class="game-title">Disawer</p><p class="game-time">🕒 05:00 AM</p><p class="game-result">--</p><p class="game-status">Open</p></div>
-            <div class="game-box"><p class="game-title">Market 05</p><p class="game-time">🕒 --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
-            <div class="game-box"><p class="game-title">Market 06</p><p class="game-time">🕒 --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
-            <div class="game-box"><p class="game-title">Market 07</p><p class="game-time">🕒 --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
-            <div class="game-box"><p class="game-title">Market 08</p><p class="game-time">🕒 --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
-        </div>
-        <h3 class="section-title">Offers & Live Quiz</h3>
-        <div class="quiz-container">
-            <div class="quiz-header"><h4>Guess Next Number Zone</h4><span>Win 1.9x (10 के 19)</span></div>
-            <div class="quiz-options">
-                <button class="quiz-btn small-btn" onclick="alert('Selected SMALL')">SMALL<p>(00 to 50)</p></button>
-                <button class="quiz-btn big-btn" onclick="alert('Selected BIG')">BIG<p>(51 to 99)</p></button>
-            </div>
+<div class="app-container">
+
+    <!--       -->
+    <div class="wallet-box">
+        <span class="wallet-title">My Wallet</span>
+        <span id="userBalance" class="wallet-amount">0.00</span>
+    </div>
+
+    <div class="sliding-bar"><span>NOTICE</span><marquee id="noticeText" behavior="scroll" direction="left">Welcome to N&N Alpha Arena! Invite friends to earn Spin Rewards from 1 to 10!</marquee></div>
+    <div class="banner-ad"> TOP BANNER ADVERTISEMENT SPACE</div>
+    
+    <h3 class="section-title">Live Game Markets</h3>
+    <div class="game-grid">
+        <!--         -->
+<div class="game-box" onclick="location.href='game.html?market=Faridabad'"><p class="game-title">Faridabad</p><p class="game-time"> 06:00 PM</p><p class="game-result">78</p><p class="game-status">Result Out</p></div>
+<div class="game-box" onclick="location.href='game.html?market=Ghaziabad'"><p class="game-title">Ghaziabad</p><p class="game-time"> 08:30 PM</p><p class="game-result">45</p><p class="game-status">Result Out</p></div>
+<div class="game-box" onclick="location.href='game.html?market=Gali'"><p class="game-title">Gali</p><p class="game-time"> 11:30 PM</p><p class="game-result">--</p><p class="game-status">Open</p></div>
+<div class="game-box" onclick="location.href='game.html?market=Disawer'"><p class="game-title">Disawer</p><p class="game-time"> 05:00 AM</p><p class="game-result">--</p><p class="game-status">Open</p></div>
+
+<!--    4        -->
+<div class="game-box" onclick="location.href='game.html?market=Market05'"><p class="game-title">Market 05</p><p class="game-time"> --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
+<div class="game-box" onclick="location.href='game.html?market=Market06'"><p class="game-title">Market 06</p><p class="game-time"> --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
+<div class="game-box" onclick="location.href='game.html?market=Market07'"><p class="game-title">Market 07</p><p class="game-time"> --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
+<div class="game-box" onclick="location.href='game.html?market=Market08'"><p class="game-title">Market 08</p><p class="game-time"> --:--</p><p class="game-result">--</p><p class="game-status">Closed</p></div>
+     </div>
+    
+    <h3 class="section-title">Offers & Live Quiz</h3>
+    <div class="quiz-container">
+        <div class="quiz-header"><h4>Guess Next Number Zone</h4><span>Win 1.9x (10  19)</span></div>
+        <div class="quiz-options">
+            <button class="quiz-btn small-btn" onclick="openBetPopup('SMALL')">SMALL<p>(00 to 50)</p></button>
+            <button class="quiz-btn big-btn" onclick="openBetPopup('BIG')">BIG<p>(51 to 99)</p></button>
         </div>
     </div>
-    <div class="bottom-fixed-zone">
-        <div class="bottom-nav">
-            <button class="nav-item active-nav" onclick="location.href='templates_dashboard.html'"><span class="nav-icon">🏠</span><span class="nav-text">Home</span></button>
-            <button class="nav-item" onclick="alert('Opening Search...')"><span class="nav-icon">🔍</span><span class="nav-text">Search</span></button>
-            <button class="nav-item active-wheel" onclick="location.href='wheel.html'"><span class="nav-icon">🎡</span><span class="nav-text" style="color: #eab308;">Wheel</span></button>
-            <button class="nav-item active-refer" onclick="location.href='refer.html'"><span class="nav-icon">🎁</span><span class="nav-text" style="color: #ec4899;">Refer</span></button>
-            <button class="nav-item" onclick="location.href='profile.html'"><span class="nav-icon">👤</span><span class="nav-text">Profile</span></button>
+</div>
+
+<!--     -  -->
+<div id="betPopup" class="bet-popup hidden">
+    <div class="popup-content">
+        <div id="popupSelection" class="popup-title">Selected: SMALL</div>
+        <input type="number" id="betAmount" class="bet-input" placeholder="Enter Amount ()" min="1">
+        <div class="popup-btns">
+            <button class="popup-btn confirm-btn" onclick="submitBet()">PLACE BET</button>
+            <button class="popup-btn cancel-btn" onclick="closeBetPopup()">CANCEL</button>
         </div>
-        <div class="bottom-ad-banner" onclick="alert('Bottom Ad Clicked!')">📢 BOTTOM STICKY ADVERTISEMENT SPACE</div>
     </div>
-</body>
-</html>
+</div>
+
+<div class="bottom-fixed-zone">
+    <div class="bottom-nav">
+        <button class="nav-item active-nav" onclick="location.href='templates_dashboard.html'"><span class="nav-icon"></span><span class="nav-text">Home</span></button>
+        <button class="nav-item" onclick="alert('Opening Search...')"><span class="nav-icon"></span><span class="nav-text">Search</span></button>
+        <button class="nav-item active-wheel" onclick="location.href='wheel.html'"><span class="nav-icon"></span><span class="nav-text" style="color: #eab308;">Wheel</span></button>
+        <button class="nav-item active-refer" onclick="location.href='refer.html'"><span class="nav-icon"></span><span class="nav-text" style="color: #ec4899;">Refer</span></button>
+        <button class="nav-item" onclick="location.href='profile.html'"><span class="nav-icon"></span><span class="nav-text">Profile</span></button>
+    </div>
+    <div class="bottom-ad-banner" onclick="alert('Bottom Ad Clicked!')"> BOTTOM STICKY ADVERTISEMENT SPACE</div>
+</div>
+
+<script>
+    //      
+    const BACKEND_URL = "https://onrender.com";
+    let globalUserBalance = 50.00; //        50  
+    let selectedOption = "";
+    let userMobile = "99927888757";
+
+    //        
+    document.addEventListener("DOMContentLoaded", async () => {
+        const storedUser = sessionStorage.getItem("userData");
+        
+        if (storedUser) {
+            const userData = JSON.parse(storedUser);
+            userMobile = userData.mobile;
+            document.getElementById("noticeText").innerText = `Welcome back, ${userData.first_name || 'User'}! Invite friends to earn Spin Rewards from 1 to 10!`;
+            await refreshLiveBalance();
+        } else {
+            //          
+            console.log("   !");
+            document.getElementById("userBalance").innerText = `${globalUserBalance.toFixed(2)}`;
+            document.getElementById("noticeText").innerText = "Welcome back, Arena Player (Local Preview)! Invite friends to earn Spin Rewards from 1 to 10!";
+        }
+    });
+
+    //        
+    async function refreshLiveBalance() {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/dashboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mobile: userMobile })
+            });
+            const data = await response.json();
+            if (data.success) {
+                globalUserBalance = parseFloat(data.balance);
+                document.getElementById("userBalance").innerText = `${globalUserBalance.toFixed(2)}`;
+            }
+        } catch (err) {
+            console.log("    ");
+        }
+    }
+
+    //   -   
+    function openBetPopup(option) {
+        selectedOption = option;
+        document.getElementById("popupSelection").innerText = `Selected: ${option}`;
+        document.getElementById("betAmount").value = "";
+        document.getElementById("betPopup").classList.remove("hidden");
+    }
+
+    function openMarketBet(marketName) {
+        openBetPopup(`${marketName} - NUMBER`);
+    }
+
+    function closeBetPopup() {
+        document.getElementById("betPopup").classList.add("hidden");
+    }
+
+    //        
+    async function submitBet() {
+        const amount = parseFloat(document.getElementById("betAmount").value);
+        if (!amount || amount <= 0) {
+            alert("   (Amount) !");
+            return;
+        }
+        if (amount > globalUserBalance) {
+            alert(" !   ");
+            return;
+        }
+
+        //       
+        globalUserBalance -= amount;
+        document.getElementById("userBalance").innerText = `${globalUserBalance.toFixed(2)}`;
+
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/place-bet`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mobile: userMobile,
+                    amount: amount,
+                    prediction: selectedOption
+                })
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                alert(` ${selectedOption}  ${amount}     !`);
+                await refreshLiveBalance();
+                closeBetPopup();
+            } else {
+                //        ,    
+                alert(`[ ] ${selectedOption}  ${amount}   !`);
+                closeBetPopup();
+            }
+        } catch (err) {
+            alert(`[ ] ${amount}     ! (      app.py  )`);
+            closeBetPopup();
+        }
+    }
+</script>

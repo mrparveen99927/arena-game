@@ -46,8 +46,11 @@ def register():
 
         # पासवर्ड सुरक्षित करना
         hashed_password = generate_password_hash(password)
+        
+random_uid = str(random.randint(10000000, 99999999))
 
         new_user = {
+           "uid": random_uid,
             "first_name": first_name,
             "last_name": last_name,
             "mobile": mobile,
@@ -91,7 +94,7 @@ def login():
             return jsonify({
                 "success": True, 
                 "message": "Login Successful!",
-                "user": {"first_name": user['first_name'], "mobile": user['mobile']}
+              "user": {"uid": user.get('uid', '00000000'), "first_name": user['first_name'], "mobile": user['mobile']}
             }), 200
         else:
             return jsonify({"success": False, "message": "गलत पासवर्ड!"}), 401
