@@ -60,29 +60,37 @@ def register_user():
 
 #   2:          
 @app.route('/api/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login_user():
     try:
         data = request.get_json() or {}
-        username = data.get('email') 
+        username = data.get('email')
         password = data.get('password')
         
         if not username or not password:
             return jsonify({"success": False, "message": "Username and password are required"}), 400
             
-        #          
+        #  -:             !
         user = users_collection.find_one({
             "$and": [
-                {"$or": [{"email": username}, {"mobile": username}]},
+                {
+                    "$or": [
+                        {"email": username}, 
+                        {"mobile": username},
+                        {"uid": str(username)}
+                    ]
+                },
                 {"password": password}
             ]
         })
+        
         if user:
             return jsonify({"success": True, "message": "Login Successful", "uid": user["uid"]}), 200
         else:
             return jsonify({"success": False, "message": "Invalid credentials"}), 401
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-
+        
 @app.route('/api/user/profile', methods=['GET'])
 def get_user_profile():
     try:
