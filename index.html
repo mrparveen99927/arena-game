@@ -219,8 +219,9 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             alert("Registration successful! New account added.");
             window.location.href = 'templates_dashboard.html';
         } else {
-            alert("Registration failed: " + data.message);
-        }
+    alert("Registration failed: Something went wrong");
+}
+
     } catch (error) {
         console.error("Server Error:", error);
         alert("Database server connection failed. Please check your Render server.");

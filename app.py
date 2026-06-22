@@ -14,7 +14,7 @@ try:
     users_collection = db['users']
     deposits_collection = db['deposits']
     cashouts_collection = db['cashouts']
-    print("MongoDB Connected Successfully! 🎉")
+    print("MongoDB Connected Successfully!  ")
 except Exception as e:
     print(f"Database Connection Error: {e}")
 
