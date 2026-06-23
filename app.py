@@ -114,11 +114,9 @@ def login_user():
         if user.get('balance') is None:
             update_data['balance'] = 0
 
-        # अगर कोई भी पुरानी कमी मिली, तो डेटाबेस को बैकग्राउंड में तुरंत अपडेट कर दें
-        if update_data:
+           if update_data:
             db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
 
-        # सफलतापूर्वक लॉगिन रिस्पॉन्स भेजें
         return jsonify({
             "success": True,
             "status": "success",
@@ -126,8 +124,6 @@ def login_user():
             "user_mobile": user.get('mobile'),
             "user_name": user.get('name') or update_data.get('name', 'Arena User')
         }), 200
-    else:
-        return jsonify({"success": False, "status": "error", "message": "गलत पासवर्ड! कृपया दोबारा जांचें।"}), 401
 
 @app.route('/api/user/profile', methods=['GET'])
 def get_user_profile():
