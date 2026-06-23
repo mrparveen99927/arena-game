@@ -62,16 +62,14 @@ def register_user():
 def login_user():
     data = request.json
     if not data:
-        return jsonify({"success": False, "message": "डेटा नहीं मिला।"}), 400
+        return jsonify({"success": False, "message": "No data received"}), 400
 
-    # फ्रंटएंड से 'username' या 'email' कुछ भी आए, दोनों को स्वीकार करें
-    username = data.get('username') or data.get('email') 
+    username = data.get('username') or data.get('email')
     password = data.get('password')
 
     if not username or not password:
         return jsonify({"success": False, "message": "Username and password are required"}), 400
 
-    # MongoDB में मोबाइल नंबर या ईमेल से यूज़र को ढूंढें
     user = db.users.find_one({
         "$or": [
             {"mobile": username},
@@ -80,19 +78,34 @@ def login_user():
     })
 
     if not user:
-        return jsonify({"success": False, "message": "यह मोबाइल नंबर रजिस्टर्ड नहीं है।"}), 401
+        return jsonify({"success": False, "message": "User not found"}), 401
 
-    # पासवर्ड की जांच करें
     if user.get('password') == password:
-        
-        # 🚀 ऑटो-फिक्स स्क्रिप्ट (जादू): पुराने यूज़र्स का डेटा ऑटोमैटिक सिंक करें
         update_data = {}
         
-        # 1. अगर 'name' गायब है, तो पुराने firstName और lastName को जोड़कर 'name' बनाएं
         if not user.get('name'):
             full_name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
             update_data['name'] = full_name if full_name else "Arena User"
             
+        if user.get('status') != 'active':
+            update_data['status'] = 'active'
+            
+        if user.get('balance') is None:
+            update_data['balance'] = 0
+
+        if update_data:
+            db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
+
+        return jsonify({
+            "success": True,
+            "status": "success",
+            "message": "Login successful",
+            "user_mobile": user.get('mobile'),
+            "user_name": user.get('name') or update_data.get('name', 'Arena User')
+        }), 200
+    else:
+        return jsonify({"success": False, "status": "error", "message": "Invalid password"}), 401
+        
         # 2. अगर यूज़र इनएक्टिव या स्टेटस गायब है, तो उसे ऑटोमैटिक 'active' करें
         if user.get('status') != 'active':
             update_data['status'] = 'active'
@@ -274,7 +287,8 @@ def declare_result():
             else:
                 db.bets.update_one({"_id": bet['_id']}, {"$set": {"status": "LOSE", "payout": 0}})
 
-        return jsonify({"status": "success", "winner_declared": final_winner, "message": "      !"}), 200
+                return jsonify({"status": "success", "winner_declared": final_winner, "message": "Result successfully declared!"}), 200
+                
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
         # ==========================================
