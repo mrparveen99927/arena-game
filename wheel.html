@@ -3,196 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>N&N Alpha Arena - Lucky Wheel</title>
+    <title>Alpha Arena - Lucky Spin</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background-color: #080710; color: #e5e7eb; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 15px; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 380px; background-color: #111827; padding: 18px; border-radius: 24px; border: 1px solid #1f2937; box-shadow: 0 15px 35px rgba(0,0,0,0.7); text-align: center; position: relative; }
+        /*            */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        html, body { background-color: #030712; color: #f9fafb; width: 100%; min-height: 100vh; overflow-x: hidden; }
+        body { display: flex; flex-direction: column; align-items: center; padding: 15px; }
         
-        /* ⬅️ TOP BAR */
-        .top-bar { display: flex; align-items: center; width: 100%; margin-bottom: 25px; }
-        .back-arrow { font-size: 20px; color: #ffffff; cursor: pointer; text-decoration: none; padding: 5px; }
-        .page-title { font-size: 16px; font-weight: bold; margin-left: 15px; color: #ffffff; }
+        .wheel-page-wrapper { width: 100%; max-width: 440px; background-color: #111827; padding: 15px; border-radius: 16px; border: 1px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
 
-        /* 🎡 CANVAS WHEEL BOX */
-        .wheel-box { position: relative; width: 280px; height: 280px; margin: 20px auto; display: flex; justify-content: center; align-items: center; }
-        .pointer { position: absolute; top: -15px; z-index: 10; font-size: 28px; color: #eab308; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+        /*    ,     */
+        .wheel-header-card { display: flex; align-items: center; justify-content: space-between; background-color: #1f2937; padding: 12px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #374151; }
+        .back-dashboard-btn { background: #111827; border: 1px solid #374151; color: white; padding: 6px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; text-transform: uppercase; }
+        .back-dashboard-btn:hover { background: #1f2937; }
+        .wheel-header-title { font-size: 15px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
+        .wheel-wallet-display { background: #030712; border: 1px solid #374151; padding: 6px 12px; border-radius: 20px; font-weight: 700; color: #4ade80; font-size: 13px; }
+
+        /*         */
+        .wheel-outer-box { position: relative; width: 280px; height: 280px; margin: 25px auto; border-radius: 50%; border: 6px solid #eab308; box-shadow: 0 0 20px rgba(234, 179, 8, 0.3), inset 0 0 15px rgba(0,0,0,0.6); overflow: hidden; background: #0b0f19; }
+        .canvas-wheel-render { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1); }
         
-        canvas { border-radius: 50%; border: 6px solid #1f2937; box-shadow: 0 8px 20px rgba(0,0,0,0.6); background-color: #030712; }
+        /*       (Pointer) */
+        .wheel-top-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 25px solid #ef4444; z-index: 10; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.5)); }
+        
+        /*      */
+        .spin-trigger-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 64px; height: 64px; background: linear-gradient(135deg, #eab308, #ca8a04); border: 3px solid #ffffff; border-radius: 50%; color: #030712; font-size: 13px; font-weight: 800; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5), 0 0 10px rgba(234, 179, 8, 0.4); z-index: 12; outline: none; transition: transform 0.1s; }
+        .spin-trigger-btn:active { transform: translate(-50%, -50%) scale(0.95); }
+        .spin-trigger-btn:disabled { background: #374151 !important; border-color: #4b5563 !important; color: #9ca3af !important; cursor: not-allowed; box-shadow: none !important; }
 
-        /* 🎟️ INFO BOX */
-        .info-box { background-color: #030712; border: 1px solid #1f2937; border-radius: 16px; padding: 14px; margin-top: 25px; margin-bottom: 20px; }
-        .ticket-text { font-size: 14px; font-weight: bold; color: #eab308; }
-        .rule-text { font-size: 12px; color: #22c55e; font-weight: bold; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* 🔥 SPIN BUTTON */
-        .btn-spin { width: 100%; background: linear-gradient(135deg, #eab308, #ca8a04); color: #030712; border: none; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 900; cursor: pointer; box-shadow: 0 6px 15px rgba(234, 179, 8, 0.3); letter-spacing: 1px; transition: 0.2s; }
-        .btn-spin:active { transform: scale(0.97); }
-        .btn-spin:disabled { background: #374151; color: #6b7280; box-shadow: none; cursor: not-allowed; }
+        /*         */
+        .wheel-cost-banner { font-size: 12px; color: #9ca3af; font-weight: bold; margin-top: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .wheel-cost-banner span { color: #eab308; font-size: 14px; }
     </style>
 </head>
 <body>
-
-    <div class="app-container">
+    <div class="wheel-page-wrapper">
         
-        <!-- ⬅️ TOP BAR -->
-        <div class="top-bar">
-            <a href="templates_dashboard.html" class="back-arrow">⬅️</a>
-            <span class="page-title">Lucky Spin Wheel</span>
+        <!--    ,     -->
+        <div class="wheel-header-card">
+            <button class="back-dashboard-btn" onclick="window.location.href='templates_dashboard.html'"> Back</button>
+            <span class="wheel-header-title">Lucky Spin</span>
+            <span class="wheel-wallet-display">Wallet: <span id="wheelWalletBal">50.00</span></span>
         </div>
 
-        <!-- 🎡 WHEEL CANVAS AREA -->
-        <div class="wheel-box">
-            <div class="pointer">▼</div>
-            <!-- CSS हटाकर अब सीधे जावास्क्रिप्ट से चक्का ड्रा होगा -->
-            <canvas id="wheelCanvas" width="260" height="260"></canvas>
+        <!--         -->
+        <div style="position: relative; width: 280px; height: 280px; margin: 20px auto;">
+            <div class="wheel-top-pointer"></div>
+            
+            <div class="wheel-outer-box">
+                <!--     -->
+                <canvas class="canvas-wheel-render" id="wheelCanvas" width="280" height="280"></canvas>
+            </div>
+            
+            <button class="spin-trigger-btn" id="spinActionBtn" onclick="startLuckySpinEngine()">Spin</button>
         </div>
 
-        <!-- 🎟️ TICKET COUNTER BOX -->
-        <div class="info-box">
-            <p class="ticket-text">🎟️ Available Spins: <span id="spinTickets">2</span></p>
-            <p class="rule-text">🎁 Win Guaranteed Reward up to Rs.500!</p>
-            <p style="font-size: 10px; color: #9ca3af; margin-top: 4px;">1 Successful Invite = 1 Free Spin Ticket.</p>
+        <!--       -->
+        <div class="wheel-cost-banner">
+               : <span>10.00</span>
         </div>
-
-        <!-- 🔥 ACTION BUTTON -->
-        <button id="spinButton" onclick="startSpinning()" class="btn-spin">SPIN NOW</button>
 
     </div>
 
-    <!-- 🔄 जावास्क्रिप्ट कैनवास और पक्का स्पिन एनीमेशन लॉजिक -->
     <script>
-        var canvas = document.getElementById("wheelCanvas");
-        var ctx = canvas.getContext("2d");
+        const BACKEND_URL = "https://arena-backen.onrender.com";
+        const SPIN_COST = 10; 
         
-        // 10 डिब्बों के इनाम और उनके रंग
-        var prizes = ["Rs.1", "Rs.2", "Rs.3", "Rs.5", "Rs.7", "Rs.10", "Rs.25", "Rs.50", "Rs.100", "Rs.500"];
-        var colors = ["#5b21b6", "#1d4ed8", "#b91c1c", "#16a34a", "#eab308", "#ec4899", "#0ea5e9", "#f97316", "#a855f7", "#ef4444"];
-        
-        var numSegments = 10;
-        var segmentAngle = (2 * Math.PI) / numSegments;
-        var currentAngle = 0; // चक्के का लाइव एंगल
-        
-        var tickets = 2; 
-        var isSpinning = false;
-        
-        // चक्के को स्क्रीन पर ड्रा करने वाला फंक्शन
-        function drawWheel() {
-            ctx.clearRect(0, 0, 260, 260);
-            ctx.save();
-            ctx.translate(130, 130);
-            ctx.rotate(currentAngle);
+        //      8  (1  500 )
+        const prizes = [
+            { text: "1", color: "#1f2937", minWin: 1, maxWin: 1 },
+            { text: "5", color: "#6366f1", minWin: 5, maxWin: 5 },
+            { text: "7", color: "#3b82f6", minWin: 7, maxWin: 7 }, //     
+            { text: "10", color: "#a855f7", minWin: 10, maxWin: 10 },
+            { text: "50", color: "#06b6d4", minWin: 50, maxWin: 50 },
+            { text: "100", color: "#22c55e", minWin: 100, maxWin: 100 },
+            { text: "200", color: "#f59e0b", minWin: 200, maxWin: 200 },
+            { text: "500", color: "#ef4444", minWin: 500, maxWin: 500 }
+        ];
+
+        const numSegments = prizes.length;
+        const segmentAngle = 360 / numSegments;
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx = canvas.getContext("2d");
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        //              
+        function drawLuckyWheel() {
+            const center = canvas.width / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            for (var i = 0; i < numSegments; i++) {
+            for (let i = 0; i < numSegments; i++) {
+                const angleStart = (i * segmentAngle * Math.PI) / 180;
+                const angleEnd = ((i + 1) * segmentAngle * Math.PI) / 180;
+                
                 ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.arc(0, 0, 130, i * segmentAngle, (i + 1) * segmentAngle);
-                ctx.fillStyle = colors[i];
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, center - 2, angleStart, angleEnd);
+                ctx.fillStyle = prizes[i].color;
                 ctx.fill();
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = "#111827";
+                ctx.strokeStyle = "#374151";
+                ctx.lineWidth = 1.5;
                 ctx.stroke();
                 
-                // टेक्स्ट (इनाम) लिखना
                 ctx.save();
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 11px sans-serif";
+                ctx.translate(center, center);
+                ctx.rotate(angleStart + (segmentAngle * Math.PI) / 360);
                 ctx.textAlign = "right";
-                ctx.textBaseline = "middle";
-                ctx.rotate(i * segmentAngle + segmentAngle / 2);
-                ctx.fillText(prizes[i], 115, 0);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 13px sans-serif";
+                ctx.fillText(prizes[i].text, center - 25, 5);
                 ctx.restore();
             }
-            
-            // बीच का छोटा गोल घेरा (Center Pin)
-            ctx.restore();
-            ctx.beginPath();
-            ctx.arc(130, 130, 22, 0, 2 * Math.PI);
-            ctx.fillStyle = "#fde047";
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = "#111827";
-            ctx.stroke();
-            ctx.fillStyle = "#111827";
-            ctx.font = "bold 10px sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("SPIN", 130, 130);
         }
 
-        // पहली बार चक्का ड्रा करना
-        drawWheel();
+        document.addEventListener("DOMContentLoaded", () => {
+            const sessionData = sessionStorage.getItem("userData");
+            let balanceVal = 50.00;
+            if (sessionData) {
+                balanceVal = parseFloat(JSON.parse(sessionData).balance);
+            }
+            document.getElementById("wheelWalletBal").innerText = " can_sym_0" + balanceVal.toFixed(2);
+            drawLuckyWheel();
+        });
 
-        function startSpinning() {
+        //     (  0, 1,  2     1, 5, 7)
+        async function startLuckySpinEngine() {
             if (isSpinning) return;
-            if (tickets <= 0) {
-                alert("You don't have any Spin Tickets left! Please refer friends to earn tickets.");
+            
+            let userData = JSON.parse(sessionStorage.getItem("userData")) || { balance: 50.00 };
+
+            if (userData.balance < SPIN_COST) {
+                alert("  !        10  ");
                 return;
             }
-        // =======      (%)      =======
-        
-        // 1.  cPanel        (%)  
-        var adminJackpotRate = parseInt(localStorage.getItem('nn_wheel_jackpot'), 10);
-        if (isNaN(adminJackpotRate)) { adminJackpotRate = 2; } //      ,   2%
 
-        // 2. 1  100        
-        var secretLuckNumber = Math.floor(Math.random() * 100) + 1;
-        var finalRewardPointer = 1; //    (1)
-
-        if (secretLuckNumber <= adminJackpotRate) {
-            //    !   7  
-            finalRewardPointer = 7; 
-            console.log(" [VIP WIN]:       7   !");
-        } else {
-            //   !    1  2   
-            finalRewardPointer = Math.random() > 0.5 ? 1 : 2;
-            console.log(" [HOUSE SAFE]:      " + finalRewardPointer + "  ");
-        }
-
-        //                   ,
-        //   `finalRewardPointer`  (        1, 2  7  )   
-        
             isSpinning = true;
-            tickets--; 
-            document.getElementById('spinTickets').innerText = tickets;
-            document.getElementById('spinButton').disabled = true;
+            document.getElementById("spinActionBtn").disabled = true;
 
-            // सीक्रे़ट कंट्रोल: यूज़र को सिर्फ Rs.1, Rs.2, Rs.3, Rs.5, या Rs.7 ही मिलेगा
-            var allowedPrizes = [1, 2, 3, 5, 7];
-            var prizeMoney = allowedPrizes[Math.floor(Math.random() * allowedPrizes.length)];
+            //     
+            userData.balance = userData.balance - SPIN_COST;
+            sessionStorage.setItem("userData", JSON.stringify(userData));
+            document.getElementById("wheelWalletBal").innerText = " can_sym_0" + userData.balance.toFixed(2);
 
-            // चुने गए इनाम का डिब्बा इंडेक्स ढूंढना
-            var prizeStr = "Rs." + prizeMoney;
-            var prizeIndex = prizes.indexOf(prizeStr);
+            //  [  ]:     3  (1, 5, 7)       
+            const safeIndexes =; 
+            const targetIndex = safeIndexes[Math.floor(Math.random() * safeIndexes.length)];
 
-            // चक्के को सुई के हिसाब से रोकने का सही टारगेट एंगल कैलकुलेटर
-            var targetAngle = (1.5 * Math.PI) - (prizeIndex * segmentAngle + segmentAngle / 2);
-            if (targetAngle < 0) targetAngle += 2 * Math.PI;
+            //    (270 )       
+            const targetAngle = 270 - (targetIndex * segmentAngle) - (segmentAngle / 2);
+            const totalSpinsAngle = 360 * 5; 
+            currentRotation = totalSpinsAngle + targetAngle;
 
-            var spinSpeed = 0.5; // शुरुआती घूमने की स्पीड
-            var deceleration = 0.003; // धीरे होने की रफ्तार
-            
-            // असली फ्रेम-बाय-फ्रेम रोटेशन लूप (दुनिया का कोई इंजन इसे रोक नहीं सकता)
-            function animateSpin() {
-                if (spinSpeed > 0) {
-                    currentAngle += spinSpeed;
-                    spinSpeed -= deceleration;
-                    drawWheel();
-                    requestAnimationFrame(animateSpin);
-                } else {
-                    // चक्के को एकदम परफेक्ट इनाम के सेंटर पर लॉक करना
-                    currentAngle = targetAngle;
-                    drawWheel();
-                    
-                    setTimeout(function() {
-                        alert("🎉 Congratulations!\nYou Won Rs." + prizeMoney + " Cash Bonus!\nIt has been added to your wallet.");
-                        isSpinning = false;
-                        document.getElementById('spinButton').disabled = false;
-                    }, 500);
-                }
-            }
-            
-            animateSpin();
+            const wheelCanvas = document.getElementById("wheelCanvas");
+            wheelCanvas.style.transform = "rotate(" + currentRotation + "deg)";
+
+            setTimeout(() => {
+                const finalPrize = prizes[targetIndex];
+                let prizeVal = parseFloat(finalPrize.text.replace(" can_sym_0", ""));
+                
+                //     
+                userData.balance += prizeVal;
+                sessionStorage.setItem("userData", JSON.stringify(userData));
+                document.getElementById("wheelWalletBal").innerText = " can_sym_0" + userData.balance.toFixed(2);
+                
+                alert("  !     " + finalPrize.text + "   ");
+
+                isSpinning = false;
+                document.getElementById("spinActionBtn").disabled = false;
+                
+                const normalizedAngle = currentRotation % 360;
+                wheelCanvas.style.transition = "none";
+                wheelCanvas.style.transform = "rotate(" + normalizedAngle + "deg)";
+                setTimeout(() => {
+                    wheelCanvas.style.transition = "transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)";
+                }, 50);
+
+            }, 4000);
         }
     </script>
 </body>
