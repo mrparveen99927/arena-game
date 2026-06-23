@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alpha Arena - Bet History</title>
     <style>
-        /* 🎨 अल्फा एरिना थीम पर आधारित डार्क प्रीमियम स्टाइल */
+        /*          */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: #030712; color: #f9fafb; min-height: 100vh; padding-bottom: 30px; display: flex; flex-direction: column; align-items: center; }
         
         .history-page-container { width: 100%; max-width: 480px; padding: 15px; }
 
-        /* 🔙 टॉप हेडर बार और बैक बटन */
+        /*        */
         .header-card { background: #0b0f19; border: 1px solid #1f2937; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        .back-btn { background: #1f2937; border: 1px solid #374151; color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: background 0.2s; }
+        .back-btn { background: #1f2937; border: 1px solid #374151; color: white; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: background 0.2s; }
         .back-btn:hover { background: #374151; }
         .page-title { font-size: 16px; font-weight: 800; color: #eab308; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* 📜 बेट हिस्ट्री लॉग्स ज़ोन */
+        /*      */
         .history-list-wrapper { display: flex; flex-direction: column; gap: 12px; width: 100%; }
         .history-card-item { background: #111827; border: 1px solid #1f2937; border-left: 4px solid #eab308; padding: 15px; border-radius: 12px; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .hist-top-row { display: flex; justify-content: space-between; font-weight: 700; color: #fff; font-size: 14px; }
@@ -31,83 +31,100 @@
 
     <div class="history-page-container">
         
-        <!-- टॉप हेडर बार -->
+        <!--    -->
         <div class="header-card">
-            <!-- 🔙 बैक बटन जो खिलाड़ी को वापस प्रोफाइल पेज पर भेज देगा -->
-            <button class="back-btn" onclick="window.location.href='profile.html'">← Back</button>
+            <!--             -->
+            <button class="back-btn" onclick="window.location.href='profile.html'"> Back</button>
             <span class="page-title">My Bet History</span>
         </div>
 
-        <!-- लाइव बेट हिस्ट्री लिस्ट कंटेनर -->
+        <!--      -->
         <div class="history-list-wrapper" id="historyLogsContainer">
-            <p style="color: #9ca3af; text-align: center; font-size: 13px;">लोड हो रहा है...</p>
+            <p style="color: #9ca3af; text-align: center; font-size: 13px;">   ...</p>
         </div>
 
     </div>
 
     <script>
-        // 🔑 लाइव प्रोडक्शन रेंडर बैकएंड यूआरएल
+        //      
         const BACKEND_URL = "https://arena-backen.onrender.com";
 
         document.addEventListener("DOMContentLoaded", () => {
             loadPlayerBetHistory();
         });
 
-        // 📊 मास्टर मेमोरी से बेट हिस्ट्री तुरंत लोड करने का इंजन
-function loadPlayerBetHistory() {
-    const container = document.getElementById("historyLogsContainer");
-    
-    // 🔒 उसी मास्टर मेमोरी (localStorage) से डेटा खींचना
-    let betsList = JSON.parse(localStorage.getItem("arena_bet_history")) || [];
+        //      MongoDB       
+        async function loadPlayerBetHistory() {
+            const container = document.getElementById("historyLogsContainer");
+            const userData = JSON.parse(sessionStorage.getItem("userData"));
 
-    if (betsList.length === 0) {
-        container.innerHTML = `<div class="no-data-msg">🎯 अभी तक आपने कोई बेट नहीं लगाई है! गेम ज़ोन में जाकर दांव लगाएं।</div>`;
-        return;
-    }
+            //        
+            if (!userData || !userData.mobile) {
+                container.innerHTML = `<div class="no-data-msg">  :      !</div>`;
+                return;
+            }
 
-    // WIN (जीतने वाली) बेट्स को लिस्ट में सबसे ऊपर रखने की सॉर्टिंग
-    betsList.sort((a, b) => {
-        if (a.status === "WIN" && b.status !== "WIN") return -1;
-        if (a.status !== "WIN" && b.status === "WIN") return 1;
-        return 0;
-    });
-
-    container.innerHTML = "";
-    betsList.forEach(bet => {
-        const isWin = bet.status === "WIN";
-        const borderStyle = isWin ? "border-left: 5px solid #22c55e; background: rgba(34, 197, 94, 0.02);" : "border-left: 4px solid #eab308;";
-        const statusBadge = isWin ? `<span style="color: #4ade80; font-weight: 800;">🏆 WIN (+ ₹${bet.payout})</span>` : `<span style="color: #eab308;">PENDING</span>`;
-
-        const card = document.createElement("div");
-        card.className = "history-card-item";
-        card.style = borderStyle;
-        
-        card.innerHTML = `
-            <div class="hist-top-row">
-                <span>${bet.market} Arena</span>
-                ${statusBadge}
-            </div>
-            <div class="hist-nums-list">
-                Numbers: ${bet.numbers.map(n => n < 10 ? "0" + n : n == 100 ? "100" : n).join(", ")}
-            </div>
-            <div class="hist-bottom-row">
-                <span>Rate: ₹${bet.rate}/Num</span>
-                <span style="color: #fff;">Total Bet: <strong>₹${bet.total.toFixed(2)}</strong></span>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-            // लाइव रेंडर बैकएंड सर्वर से डेटा सिंक करने की कोशिश करना (बैकग्राउंड में)
             try {
-                if (userData && userData.mobile) {
-                    const res = await fetch(`${BACKEND_URL}/api/admin/dashboard-sheet`);
-                    const data = await res.json();
-                    console.log("डेटाबेस से लाइव इतिहास सिंक हुआ!");
+                //              
+                const res = await fetch(`${BACKEND_URL}/api/user-bets?mobile=${userData.mobile}`);
+                const result = await res.json();
+
+                if (result.status === "success" && result.bets && result.bets.length > 0) {
+                    let betsList = result.bets;
+
+                    //  WIN ( )         (Top)  
+                    betsList.sort((a, b) => {
+                        const statusA = a.status || "PENDING";
+                        const statusB = b.status || "PENDING";
+                        if (statusA === "WIN" && statusB !== "WIN") return -1;
+                        if (statusA !== "WIN" && statusB === "WIN") return 1;
+                        return 0;
+                    });
+
+                    container.innerHTML = ""; //       
+                    
+                    betsList.forEach(bet => {
+                        const isWin = bet.status === "WIN";
+                        const borderStyle = isWin ? "border-left: 5px solid #22c55e; background: rgba(34, 197, 94, 0.02);" : "border-left: 4px solid #eab308;";
+                        
+                        //      (DAILY_GALI  Gali Arena )
+                        const clearMarketName = bet.round_id ? bet.round_id.replace("DAILY_", "") : "FARIDABAD";
+                        const formattedMarket = clearMarketName.charAt(0).toUpperCase() + clearMarketName.slice(1).toLowerCase();
+                        
+                        const statusBadge = isWin ? 
+                            `<span style="color: #4ade80; font-weight: 800;"> WIN (+ ${parseFloat(bet.payout).toFixed(2)})</span>` : 
+                            `<span style="color: #eab308;">PENDING</span>`;
+
+                        const card = document.createElement("div");
+                        card.className = "history-card-item";
+                        card.style = borderStyle;
+                        
+                        //         
+                        const betNumbers = bet.numbers || [];
+                        const ratePerNum = bet.amount || 10;
+                        const totalBetAmount = betNumbers.length * ratePerNum;
+
+                        card.innerHTML = `
+                            <div class="hist-top-row">
+                                <span>${formattedMarket} Arena</span>
+                                ${statusBadge}
+                            </div>
+                            <div class="hist-nums-list">
+                                Numbers: ${betNumbers.map(n => n < 10 ? "0"+n : n == 100 ? "100" : n).join(", ")}
+                            </div>
+                            <div class="hist-bottom-row">
+                                <span>Rate: ${ratePerNum}/Num</span>
+                                <span style="color: #fff;">Total Bet: <strong>${parseFloat(totalBetAmount).toFixed(2)}</strong></span>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = `<div class="no-data-msg">        !      </div>`;
                 }
             } catch (err) {
-                console.log("रेंडर सर्ver बैकअप मोड में है।");
+                console.error("History Server Sync Error:", err);
+                container.innerHTML = `<div class="no-data-msg" style="color: #ef4444;">       !      </div>`;
             }
         }
     </script>
