@@ -147,7 +147,7 @@
             document.getElementById("wheelWalletBal").innerText = "" + userData.balance.toFixed(2);
 
             //  [ ]:     3  (Index 0, 1, 2 = 1, 5, 7)    
-            const safeIndexes =; 
+            const safeIndexes = new Array(0, 1, 2);
             const targetIndex = safeIndexes[Math.floor(Math.random() * safeIndexes.length)];
 
             const targetAngle = 270 - (targetIndex * segmentAngle) - (segmentAngle / 2);
