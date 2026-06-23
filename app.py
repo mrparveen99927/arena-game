@@ -7,7 +7,7 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 
 app = Flask(__name__)
-CORS(app)  # CORS एरर को रोकने के लिए
+CORS(app)  # CORS एरर रोकने के लिए
 
 # 🔑 1. MASTER DATABASE CONNECTION
 MONGO_URI = "mongodb+srv://arena_user:Arena999@cluster0.pluvfcd.mongodb.net/?appName=Cluster0"
@@ -30,15 +30,15 @@ def register_user():
         mobile = data.get('mobile')
         email = data.get('email')
         password = data.get('password')
-        
+
         if not name or not mobile or not password:
             return jsonify({"success": False, "message": "Required fields are missing"}), 400
-            
+
         # चेक करें कि यूजर पहले से है या नहीं
         existing_user = db.users.find_one({"mobile": mobile})
         if existing_user:
             return jsonify({"success": False, "message": "Mobile number already registered"}), 400
-            
+
         # नया यूजर ढांचा (₹50 बोनस कॉइन्स के साथ)
         new_user = {
             "name": name,
@@ -83,10 +83,10 @@ def login_user():
         if not user.get('name'):
             full_name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
             update_data['name'] = full_name if full_name else "Arena User"
-            
+
         if user.get('status') != 'active':
             update_data['status'] = 'active'
-            
+
         if user.get('balance') is None:
             update_data['balance'] = 0
 
@@ -109,7 +109,6 @@ def get_game_status():
     try:
         mobile = request.args.get('mobile')
         user_balance = 0
-        
         if mobile:
             user = db.users.find_one({"mobile": mobile})
             if user:
@@ -117,10 +116,9 @@ def get_game_status():
 
         now_ist = datetime.now(IST)
         current_time = now_ist.strftime("%H:%M")
-        
         lock_time = "16:40"
         result_time = "17:00"
-        
+
         if lock_time <= current_time < result_time:
             return jsonify({
                 "status": "closed",
@@ -199,7 +197,7 @@ def get_admin_dashboard_sheet():
     try:
         sheet_data = {str(i): 0 for i in range(1, 101)}
         active_bets = list(db.bets.find({"status": "PENDING"}))
-        
+
         for bet in active_bets:
             numbers = bet.get('numbers', [])
             amount_per_num = int(bet.get('amount_per_number', 0))
@@ -215,7 +213,7 @@ def get_admin_dashboard_sheet():
             if amt > 0:
                 lowest_betted = num
                 break
-                
+
         zero_money_numbers = [num for num, amt in sheet_data.items() if amt == 0]
 
         return jsonify({
@@ -236,6 +234,7 @@ def declare_result():
     try:
         data = request.json or {}
         winning_number = data.get('winning_number')
+        round_id = "DAILY_FARIDABAD"
 
         if not winning_number:
             sheet_data = {str(i): 0 for i in range(1, 101)}
@@ -245,7 +244,7 @@ def declare_result():
                 for num in bet.get('numbers', []):
                     if str(num) in sheet_data:
                         sheet_data[str(num)] += int(bet.get('amount_per_number', 0))
-            
+
             zero_money_numbers = [num for num, amt in sheet_data.items() if amt == 0]
             if zero_money_numbers:
                 winning_number = zero_money_numbers[0]
@@ -253,7 +252,6 @@ def declare_result():
                 winning_number = min(sheet_data, key=sheet_data.get)
 
         winning_number = int(winning_number)
-        round_id = "DAILY_FARIDABAD"
 
         db.results.insert_one({
             "winning_number": winning_number,
@@ -261,8 +259,8 @@ def declare_result():
             "declared_at": datetime.now(IST)
         })
 
+                # 🏆 7. ADMIN DECLARE RESULT (कंटिन्यूड...)
         active_bets = list(db.bets.find({"status": "PENDING", "round_id": round_id}))
-        
         for bet in active_bets:
             user_id = bet.get('user_id')
             numbers = bet.get('numbers', [])
@@ -273,16 +271,18 @@ def declare_result():
                 db.users.update_one({"mobile": user_id}, {"$inc": {"balance": payout}})
                 db.bets.update_one({"_id": bet["_id"]}, {"$set": {"status": "WIN", "payout": payout}})
             else:
-            	            # ❌ लूज़र बेट्स का स्टेटस LOSE सेट करें
-            db.bets.update_one({"_id": bet["_id"]}, {"$set": {"status": "LOSE", "payout": 0}})
+                # ❌ लूज़र बेट्स का स्टेटस LOSE सेट करें
+                db.bets.update_one({"_id": bet["_id"]}, {"$set": {"status": "LOSE", "payout": 0}})
 
         return jsonify({
             "status": "success",
             "message": f"Result {winning_number} successfully declared and 95x payouts distributed!"
         }), 200
+        
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ⚙️ SERVER MAIN START COMMAND (RENDER DEPLOYMENT ENGINE)
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
