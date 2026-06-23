@@ -25,8 +25,10 @@ def home():
 @app.route('/api/register', methods=['POST'])
 def register_user():
     try:
-        data = request.json or {}
-        name = data.get('name')
+                data = request.json or {}
+        first_name = data.get('firstName') or data.get('first_name') or ""
+        last_name = data.get('lastName') or data.get('last_name') or ""
+        name = data.get('name') or f"{first_name} {last_name}".strip()
         mobile = data.get('mobile')
         email = data.get('email')
         password = data.get('password')
