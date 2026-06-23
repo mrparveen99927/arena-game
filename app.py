@@ -231,59 +231,79 @@ def get_admin_dashboard_sheet():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# 🏆 7. ADMIN DECLARE RESULT & MIN-LOAD AUTOWINNER (95x PAYOUT)
-@app.route('/api/admin/declare-result', methods=['POST'])
-def declare_result():
+# 📊 6. CPANEL COMPLETE ADMIN DASHBOARD ENGINE (WITH PURE 6-DIGIT RANDOM UID)
+@app.route('/api/admin/dashboard-sheet', methods=['GET'])
+def get_admin_dashboard_sheet():
     try:
-        data = request.json or {}
-        winning_number = data.get('winning_number')
-        round_id = "DAILY_FARIDABAD"
-
-        if not winning_number:
-            sheet_data = {str(i): 0 for i in range(1, 101)}
-            active_bets = list(db.bets.find({"status": "PENDING"}))
-            
-            for bet in active_bets:
-                for num in bet.get('numbers', []):
-                    if str(num) in sheet_data:
-                        sheet_data[str(num)] += int(bet.get('amount_per_number', 0))
-
-            zero_money_numbers = [num for num, amt in sheet_data.items() if amt == 0]
-            if zero_money_numbers:
-                winning_number = zero_money_numbers[0]
-            else:
-                winning_number = min(sheet_data, key=sheet_data.get)
-
-        winning_number = int(winning_number)
-
-        db.results.insert_one({
-            "winning_number": winning_number,
-            "round_id": round_id,
-            "declared_at": datetime.now(IST)
+        users_cursor = db.users.find({}, {
+            "_id": 1, "mobile": 1, "name": 1, "email": 1, "balance": 1, "status": 1
         })
-
-                # 🏆 7. ADMIN DECLARE RESULT (कंटिन्यूड...)
-        active_bets = list(db.bets.find({"status": "PENDING", "round_id": round_id}))
-        for bet in active_bets:
-            user_id = bet.get('user_id')
-            numbers = bet.get('numbers', [])
-            amount_per_num = int(bet.get('amount_per_number', 0))
-
-            if winning_number in numbers:
-                payout = amount_per_num * 95
-                db.users.update_one({"mobile": user_id}, {"$inc": {"balance": payout}})
-                db.bets.update_one({"_id": bet["_id"]}, {"$set": {"status": "WIN", "payout": payout}})
+        users_list = []
+        for u in users_cursor:
+            bal = u.get('balance', 0)
+            try:
+                bal = float(bal)
+            except:
+                bal = 0.0
+            
+            db_id = str(u.get('_id', ''))
+            if db_id:
+                numeric_id = str(int(db_id[-6:], 16))[-6:]
+                pure_6digit_uid = numeric_id.zfill(6)
             else:
-                # ❌ लूज़र बेट्स का स्टेटस LOSE सेट करें
-                db.bets.update_one({"_id": bet["_id"]}, {"$set": {"status": "LOSE", "payout": 0}})
+                pure_6digit_uid = "000000"
+            
+            users_list.append({
+                "uid": pure_6digit_uid,
+                "name": u.get('name', 'Arena User'),
+                "mobile": u.get('mobile', 'N/A'),
+                "email": u.get('email', 'N/A'),
+                "balance": f"₹{bal:,.2f}",
+                "status": u.get('status', 'active')
+            })
+
+        total_users_count = len(users_list)
+        sheet_data = {str(i): 0 for i in range(1, 101)}
+        active_bets = list(db.bets.find({"status": "PENDING"}))
+        total_active_bets_money = 0
+
+        for bet in active_bets:
+            numbers = bet.get('numbers', [])
+            amount_per_num = 0
+            try:
+                amount_per_num = int(bet.get('amount_per_number', 0))
+            except:
+                continue
+            for num in numbers:
+                if str(num) in sheet_data:
+                    sheet_data[str(num)] += amount_per_num
+                    total_active_bets_money += amount_per_num
+
+        sorted_sheet = sorted(sheet_data.items(), key=lambda x: x[1])
+        highest_betted = f"#{sorted_sheet[-1][0]} (₹{sorted_sheet[-1][1]})" if sorted_sheet and sorted_sheet[-1][1] > 0 else "None"
+        
+        lowest_betted = "None"
+        for num, amt in sorted_sheet:
+            if amt > 0:
+                lowest_betted = f"#{num} (₹{amt})"
+                break
+
+        zero_money_numbers = [num for num, amt in sheet_data.items() if amt == 0]
 
         return jsonify({
             "status": "success",
-            "message": f"Result {winning_number} successfully declared and 95x payouts distributed!"
+            "total_users": total_users_count,
+            "total_active_bets_money": total_active_bets_money,
+            "users": users_list,
+            "sheet": sheet_data,
+            "tags": {
+                "highest": highest_betted,
+                "lowest": lowest_betted,
+                "zero_count": len(zero_money_numbers)
+            }
         }), 200
-        
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error", "message": f"Database Error: {str(e)}"}), 500
 
 # ⚙️ SERVER MAIN START COMMAND (RENDER DEPLOYMENT ENGINE)
 if __name__ == '__main__':
