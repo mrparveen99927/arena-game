@@ -259,6 +259,32 @@ def declare_result():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
         
+        # 📊 9. खिलाड़ी की लाइव बेट हिस्ट्री खींचने का एंडपॉइंट (100% फिक्स रूट)
+@app.route('/api/user-bets', methods=['GET'])
+def get_user_bets():
+    try:
+        # फ्रंटएंड से खिलाड़ी का मोबाइल नंबर पकड़ना
+        user_mobile = request.args.get('mobile')
+        if not user_mobile:
+            return jsonify({"status": "error", "message": "Mobile number is required!"}), 400
+
+        # MongoDB से केवल इस यूजर की सभी बेट्स निकालना (नई बेट्स सबसे ऊपर)
+        user_bets = list(db.bets.find({"user_id": str(user_mobile)}).sort("_id", -1))
+        
+        # MongoDB की ID ऑब्जेक्ट को सादा टेक्स्ट (String) में बदलना ताकि एरर न आए
+        for bet in user_bets:
+            bet['_id'] = str(bet['_id'])
+            if 'declared_at' in bet and bet['declared_at']:
+                bet['declared_at'] = bet['declared_at'].strftime("%Y-%m-%d %H:%M:%S")
+
+        return jsonify({
+            "status": "success",
+            "bets": user_bets
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+        
+        
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
