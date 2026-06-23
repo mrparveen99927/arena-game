@@ -58,39 +58,64 @@ def register_user():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-#   2:          
-@app.route('/api/login', methods=['POST'])
 @app.route('/api/login', methods=['POST'])
 def login_user():
-    try:
-        data = request.get_json() or {}
-        username = data.get('email')
-        password = data.get('password')
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "message": "डेटा नहीं मिला।"}), 400
+
+    # फ्रंटएंड से 'username' या 'email' कुछ भी आए, दोनों को स्वीकार करें
+    username = data.get('username') or data.get('email') 
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({"success": False, "message": "Username and password are required"}), 400
+
+    # MongoDB में मोबाइल नंबर या ईमेल से यूज़र को ढूंढें
+    user = db.users.find_one({
+        "$or": [
+            {"mobile": username},
+            {"email": username}
+        ]
+    })
+
+    if not user:
+        return jsonify({"success": False, "message": "यह मोबाइल नंबर रजिस्टर्ड नहीं है।"}), 401
+
+    # पासवर्ड की जांच करें
+    if user.get('password') == password:
         
-        if not username or not password:
-            return jsonify({"success": False, "message": "Username and password are required"}), 400
+        # 🚀 ऑटो-फिक्स स्क्रिप्ट (जादू): पुराने यूज़र्स का डेटा ऑटोमैटिक सिंक करें
+        update_data = {}
+        
+        # 1. अगर 'name' गायब है, तो पुराने firstName और lastName को जोड़कर 'name' बनाएं
+        if not user.get('name'):
+            full_name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
+            update_data['name'] = full_name if full_name else "Arena User"
             
-        #  -:             !
-        user = users_collection.find_one({
-            "$and": [
-                {
-                    "$or": [
-                        {"email": username}, 
-                        {"mobile": username},
-                        {"uid": str(username)}
-                    ]
-                },
-                {"password": password}
-            ]
-        })
-        
-        if user:
-            return jsonify({"success": True, "message": "Login Successful", "uid": user["uid"]}), 200
-        else:
-            return jsonify({"success": False, "message": "Invalid credentials"}), 401
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
-        
+        # 2. अगर यूज़र इनएक्टिव या स्टेटस गायब है, तो उसे ऑटोमैटिक 'active' करें
+        if user.get('status') != 'active':
+            update_data['status'] = 'active'
+            
+        # 3. अगर नए वॉलेट का बैलेंस गायब है, तो डिफ़ॉल्ट रूप से ₹0 या ₹50 सेट करें
+        if user.get('balance') is None:
+            update_data['balance'] = 0
+
+        # अगर कोई भी पुरानी कमी मिली, तो डेटाबेस को बैकग्राउंड में तुरंत अपडेट कर दें
+        if update_data:
+            db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
+
+        # सफलतापूर्वक लॉगिन रिस्पॉन्स भेजें
+        return jsonify({
+            "success": True,
+            "status": "success",
+            "message": "Login successful",
+            "user_mobile": user.get('mobile'),
+            "user_name": user.get('name') or update_data.get('name', 'Arena User')
+        }), 200
+    else:
+        return jsonify({"success": False, "status": "error", "message": "गलत पासवर्ड! कृपया दोबारा जांचें।"}), 401
+
 @app.route('/api/user/profile', methods=['GET'])
 def get_user_profile():
     try:
@@ -252,6 +277,77 @@ def declare_result():
         return jsonify({"status": "success", "winner_declared": final_winner, "message": "      !"}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+        # ==========================================
+# 🕒 STEP 1: GAME STATUS & TIMING ENDPOINT (यहाँ जोड़ें)
+# ==========================================
+from datetime import datetime
+import pytz
+
+IST = pytz.timezone('Asia/Kolkata')
+
+@app.route('/api/game-status', methods=['GET'])
+def get_game_status():
+    try:
+        now_ist = datetime.now(IST)
+        current_time = now_ist.strftime("%H:%M")
+        
+        lock_time = "16:40"
+        result_time = "17:00"
+        
+        if lock_time <= current_time < result_time:
+            return jsonify({
+                "status": "closed",
+                "message": "Betting Closed. Waiting for Result...",
+                "server_time": current_time
+            })
+        else:
+            return jsonify({
+                "status": "open",
+                "message": "Betting is Live!",
+                "server_time": current_time
+            })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+        @app.route('/api/admin/dashboard-sheet', methods=['GET'])
+def get_admin_dashboard_sheet():
+    try:
+        # 1 से 100 तक के सभी नंबरों के लिए ₹0 का शुरुआती पूल बनाएं
+        sheet_data = {str(i): 0 for i in range(1, 101)}
+        
+        # डेटाबेस से सभी PENDING (एक्टिव) बेट्स निकालें
+        active_bets = db.bets.find({"status": "PENDING"})
+        
+        for bet in active_bets:
+            numbers = bet.get('numbers', [])
+            amount_per_num = int(bet.get('amount_per_number', 0))
+            for num in numbers:
+                if str(num) in sheet_data:
+                    sheet_data[str(num)] += amount_per_num
+
+        sorted_sheet = sorted(sheet_data.items(), key=lambda x: x[1])
+        highest_betted = sorted_sheet[-1][0] if sorted_sheet[-1][1] > 0 else "None"
+        
+        lowest_betted = "None"
+        for num, amt in sorted_sheet:
+            if amt > 0:
+                lowest_betted = num
+                break
+                
+        zero_money_numbers = [num for num, amt in sheet_data.items() if amt == 0]
+
+        return jsonify({
+            "status": "success",
+            "sheet": sheet_data,
+            "tags": {
+                "highest": highest_betted,
+                "lowest": lowest_betted,
+                "zero_count": len(zero_money_numbers)
+            }
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+        
+        
 
 if __name__ == '__main__':
     import os

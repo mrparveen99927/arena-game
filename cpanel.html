@@ -201,6 +201,22 @@
         </tbody>
     </table>
 </div>
+<!-- 👈 लाइव शीट का अलग कमरा (Section) जो शुरू में छुपा रहेगा -->
+<!-- 👈 वापस पहले जैसा कर दें ताकि डिब्बे स्क्रीन पर दिखने लगें -->
+<div id="live-satta-sheet" class="content-section">
+
+  <!-- 📊 लाइव रिस्क और प्रॉफिट टैग्स -->
+  <div class="admin-tags-container" style="display: flex; gap: 15px; margin: 20px 0; font-weight: bold; font-family: sans-serif;">
+    <div id="highest-bet-tag" style="background: #ef4444; padding: 10px; border-radius: 6px; color: white;">Highest Betted: Loading...</div>
+    <div id="lowest-bet-tag" style="background: #eab308; padding: 10px; border-radius: 6px; color: black;">Lowest Betted: Loading...</div>
+    <div id="zero-bet-tag" style="background: #22c55e; padding: 10px; border-radius: 6px; color: white;">Zero Money Numbers: Loading...</div>
+  </div>
+
+  <!-- 🔢 1 से 100 लाइव सट्टा शीट ग्रिड -->
+  <div class="satta-sheet-grid" id="adminSattaSheet" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 20px; font-family: sans-serif;">
+    <!-- जावास्क्रिप्ट इसके अंदर अपने आप 1 से 100 तक के डिब्बे बना देगी -->
+  </div>
+</div>
 
         </div>
                 <!-- S2: WITHDRAWAL REQUESTS -->
@@ -428,8 +444,41 @@
         </div>
         
     </main>
+    
         <!-- ऑफ़लाइन इंजन स्क्रिप्ट (LocalStorage संचालित) -->
     <script>
+    // 📊 लाइव सट्टा शीट का डेटा बैकएंड से खींचने का कोड
+async function loadLiveSattaSheet() {
+    try {
+        const response = await fetch("https://onrender.com");
+        const data = await response.json();
+        
+        if (data.status === "success") {
+            const highEl = document.getElementById("highest-bet-tag");
+            const lowEl = document.getElementById("lowest-bet-tag");
+            const zeroEl = document.getElementById("zero-bet-tag");
+
+            if (highEl) highEl.innerText = `Highest Betted: Number ${data.tags.highest}`;
+            if (lowEl) lowEl.innerText = `Lowest Betted: Number ${data.tags.lowest}`;
+            if (zeroEl) zeroEl.innerText = `Zero Money Numbers: ${data.tags.zero_count}`;
+
+            for (let i = 1; i <= 100; i++) {
+                // यहाँ ध्यान दें: आपके ग्रिड डिब्बों की ID के अनुसार सिंक किया गया है
+                const cell = document.getElementById(`sheet-num-${i}`);
+                if (cell) {
+                    cell.innerText = `₹${data.sheet[i] || 0}`;
+                }
+            }
+        }
+    } catch (error) {
+        console.error("लाइव शीट लोड करने में एरर:", error);
+    }
+}
+
+// हर 10 सेकंड में अपने आप डेटा अपडेट करें
+setInterval(loadLiveSattaSheet, 10000);
+loadLiveSattaSheet();
+
     // 🔐 एडमिन सुरक्षा आईडी और पासवर्ड सिस्टम (लूप-फ्री और 100% सेफ)
 (function checkAdminLogin() {
     // 🎯 नियम: अगर एडमिन पहले ही इसी बार सही लॉगिन कर चुका है, तो दोबारा पासवर्ड नहीं मांगेगा
@@ -991,6 +1040,82 @@ async function fetchAllUsersToTable() {
         tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">⚠️ लाइव डेटाबेस सर्वर से कनेक्शन फेल! (app.py में एपीआई रूट जोड़ें)</td></tr>';
     }
 }
+// 🛠️ 1 से 100 तक की शीट के डिब्बे स्क्रीन पर ऑटो-जेनरेट करना
+function createAdminSheetDOM() {
+    const gridContainer = document.getElementById("adminSattaSheet");
+    if (!gridContainer) return;
+    
+    gridContainer.innerHTML = ""; // पुराना साफ़ करें
+    
+    for (let i = 1; i <= 100; i++) {
+        const box = document.createElement("div");
+        box.id = `sheet-box-${i}`;
+        box.style.padding = "10px";
+        box.style.border = "1px solid #475569";
+        box.style.borderRadius = "4px";
+        box.style.textAlign = "center";
+        box.style.background = "#1e293b";
+        box.style.color = "#ffffff";
+        
+        // नंबर और उसके नीचे पैसे का ढांचा
+        box.innerHTML = `<div style="font-size: 14px; font-weight: bold;">#${i}</div>
+                         <div id="sheet-num-${i}" style="font-size: 12px; margin-top: 4px; color: #94a3b8;">₹0</div>`;
+        
+        gridContainer.appendChild(box);
+    }
+}
+
+// 📊 बैकएंड से लाइव पैसा खींचकर स्क्रीन पर दिखाना
+async function loadLiveSattaSheet() {
+    try {
+        const response = await fetch("https://onrender.com");
+        const data = await response.json();
+        
+        if (data.status === "success") {
+            // 1. तीन मुख्य टैग्स अपडेट करें
+            const highEl = document.getElementById("highest-bet-tag");
+            const lowEl = document.getElementById("lowest-bet-tag");
+            const zeroEl = document.getElementById("zero-bet-tag");
+
+            if (highEl) highEl.innerText = `Highest Betted: Number ${data.tags.highest}`;
+            if (lowEl) lowEl.innerText = `Lowest Betted: Number ${data.tags.lowest}`;
+            if (zeroEl) zeroEl.innerText = `Zero Money Numbers: ${data.tags.zero_count}`;
+
+            // 2. ग्रिड के हर डिब्बे में लाइव पैसे की रकम और कलर कोडिंग भरना
+            for (let i = 1; i <= 100; i++) {
+                const textCell = document.getElementById(`sheet-num-${i}`);
+                const outerBox = document.getElementById(`sheet-box-${i}`);
+                
+                if (textCell && outerBox) {
+                    const amount = data.sheet[i] || 0;
+                    textCell.innerText = `₹${amount}`;
+                    textCell.style.color = "#ffffff"; // पैसे का रंग सफेद करें
+                    
+                    // विज़ुअल कलर कोडिंग (एडमिन की आसानी के लिए)
+                    if (i == data.tags.highest && amount > 0) {
+                        outerBox.style.background = "#ef4444"; // लाल = सबसे ज्यादा रिस्क (हाउस लॉस जोन)
+                    } else if (i == data.tags.lowest && amount > 0) {
+                        outerBox.style.background = "#eab308"; // पीला = कम पेआउट जोन
+                    } else if (amount === 0) {
+                        outerBox.style.background = "#14532d"; // गहरा हरा = 100% एड敏 प्रॉफिट जोन (कोई रिस्क नहीं)
+                    } else {
+                        outerBox.style.background = "#1e293b"; // नॉर्मल नीला/काला
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error("लाइव शीट लोड करने में एरर:", error);
+    }
+}
+
+// पेज लोड होते ही डिब्बे बनाएं और डेटा लोड करें
+window.addEventListener('DOMContentLoaded', () => {
+    createAdminSheetDOM(); // डिब्बे बनाएं
+    loadLiveSattaSheet();  // डेटा भरें
+    setInterval(loadLiveSattaSheet, 10000); // हर 10 सेकंड में लाइव अपडेट करें
+});
+
 
         
     </script>
