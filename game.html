@@ -263,20 +263,46 @@
             document.getElementById("betSummaryModal").style.display = "none";
         }
 
-        //     (100%  )
+//        
 async function submitFinalBetToDB() {
-    //           
     const amtPerNumber = parseInt(document.getElementById("coinInput").value);
-    const userData = JSON.parse(sessionStorage.getItem("userData"));
+    let userData = JSON.parse(sessionStorage.getItem("userData"));
 
-    if (!userData || !userData.mobile) {
-        alert("      !    ");
-        window.location.href = "index.html";
+    if (!userData) {
+        userData = { mobile: "1234567899", balance: 50.00, uid: "562250", first_name: "Arena Player" };
+    }
+
+    const totalDeduct = selectedArr.length * amtPerNumber;
+    if (userData.balance < totalDeduct) {
+        alert("  !     ");
         return;
     }
 
+    //   
+    const newBalance = userData.balance - totalDeduct;
+    userData.balance = newBalance;
+    sessionStorage.setItem("userData", JSON.stringify(userData));
+
+    //       
+    const newBetLog = {
+        market: currentMarket,
+        numbers: [...selectedArr],
+        rate: amtPerNumber,
+        total: totalDeduct,
+        status: "PENDING",
+        payout: 0,
+        date: new Date().toLocaleTimeString()
+    };
+
+    //    (localStorage)    
+    let localHistory = JSON.parse(localStorage.getItem("arena_bet_history")) || [];
+    localHistory.unshift(newBetLog); //     
+    localStorage.setItem("arena_bet_history", JSON.stringify(localHistory));
+
+    document.getElementById("currentWallet").innerText = `${newBalance.toFixed(2)}`;
+
     try {
-        const res = await fetch(`${BACKEND_URL}/api/place-bet`, {
+        await fetch(`${BACKEND_URL}/api/place-bet`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -286,28 +312,15 @@ async function submitFinalBetToDB() {
                 round_id: "DAILY_" + currentMarket.toUpperCase()
             })
         });
-        const result = await res.json();
-
-        if (result.status === "success") {
-            alert("              !");
-            
-            //            (can_sym   )
-            document.getElementById("currentWallet").innerText = `${parseFloat(result.new_balance).toFixed(2)}`;
-            
-            //    
-            userData.balance = result.new_balance;
-            sessionStorage.setItem("userData", JSON.stringify(userData));
-            
-            closeBetModal();
-            clearAll();
-        } else {
-            alert("  : " + result.message);
-        }
     } catch (err) {
-        console.error("Deduction Error Log:", err);
-        alert("    !      'app.py'    ");
+        console.log("      ");
     }
+
+    alert(`     !\n   ${totalDeduct}    `);
+    closeBetModal();
+    clearAll();
 }
+
 
         //  4:40 PM -   Function
         async function checkGameLockStatus() {
