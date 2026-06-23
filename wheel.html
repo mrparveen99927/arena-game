@@ -66,19 +66,20 @@
     </div>
 
     <script>
+                //      
         const BACKEND_URL = "https://arena-backen.onrender.com";
         const SPIN_COST = 10; 
         
-        //      8  (1  500 )
+        //    8   (   )
         const prizes = [
-            { text: "1", color: "#1f2937", minWin: 1, maxWin: 1 },
-            { text: "5", color: "#6366f1", minWin: 5, maxWin: 5 },
-            { text: "7", color: "#3b82f6", minWin: 7, maxWin: 7 }, //     
-            { text: "10", color: "#a855f7", minWin: 10, maxWin: 10 },
-            { text: "50", color: "#06b6d4", minWin: 50, maxWin: 50 },
-            { text: "100", color: "#22c55e", minWin: 100, maxWin: 100 },
-            { text: "200", color: "#f59e0b", minWin: 200, maxWin: 200 },
-            { text: "500", color: "#ef4444", minWin: 500, maxWin: 500 }
+            { text: "Rs.1", color: "#1f2937" },
+            { text: "Rs.5", color: "#6366f1" },
+            { text: "Rs.7", color: "#3b82f6" },
+            { text: "Rs.10", color: "#a855f7" },
+            { text: "Rs.50", color: "#06b6d4" },
+            { text: "Rs.100", color: "#22c55e" },
+            { text: "Rs.200", color: "#f59e0b" },
+            { text: "Rs.500", color: "#ef4444" }
         ];
 
         const numSegments = prizes.length;
@@ -88,7 +89,7 @@
         let currentRotation = 0;
         let isSpinning = false;
 
-        //              
+        //         
         function drawLuckyWheel() {
             const center = canvas.width / 2;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -123,11 +124,11 @@
             if (sessionData) {
                 balanceVal = parseFloat(JSON.parse(sessionData).balance);
             }
-            document.getElementById("wheelWalletBal").innerText = " can_sym_0" + balanceVal.toFixed(2);
+            document.getElementById("wheelWalletBal").innerText = "" + balanceVal.toFixed(2);
             drawLuckyWheel();
         });
 
-        //     (  0, 1,  2     1, 5, 7)
+        //     ( 1, 5,  7   )
         async function startLuckySpinEngine() {
             if (isSpinning) return;
             
@@ -141,16 +142,14 @@
             isSpinning = true;
             document.getElementById("spinActionBtn").disabled = true;
 
-            //     
             userData.balance = userData.balance - SPIN_COST;
             sessionStorage.setItem("userData", JSON.stringify(userData));
-            document.getElementById("wheelWalletBal").innerText = " can_sym_0" + userData.balance.toFixed(2);
+            document.getElementById("wheelWalletBal").innerText = "" + userData.balance.toFixed(2);
 
-            //  [  ]:     3  (1, 5, 7)       
+            //  [ ]:     3  (Index 0, 1, 2 = 1, 5, 7)    
             const safeIndexes =; 
             const targetIndex = safeIndexes[Math.floor(Math.random() * safeIndexes.length)];
 
-            //    (270 )       
             const targetAngle = 270 - (targetIndex * segmentAngle) - (segmentAngle / 2);
             const totalSpinsAngle = 360 * 5; 
             currentRotation = totalSpinsAngle + targetAngle;
@@ -160,12 +159,11 @@
 
             setTimeout(() => {
                 const finalPrize = prizes[targetIndex];
-                let prizeVal = parseFloat(finalPrize.text.replace(" can_sym_0", ""));
+                let prizeVal = parseFloat(finalPrize.text.replace("Rs.", ""));
                 
-                //     
                 userData.balance += prizeVal;
                 sessionStorage.setItem("userData", JSON.stringify(userData));
-                document.getElementById("wheelWalletBal").innerText = " can_sym_0" + userData.balance.toFixed(2);
+                document.getElementById("wheelWalletBal").innerText = "" + userData.balance.toFixed(2);
                 
                 alert("  !     " + finalPrize.text + "   ");
 

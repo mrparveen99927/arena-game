@@ -346,10 +346,10 @@
 
     <!-- स्क्रिप्ट की शुरुआत -->
     <script>
-            // 🔑 लाइव प्रोडक्शन रेंडर बैकएंड यूआरएल
+        // 🔑 लाइव प्रोडक्शन रेंडर बैकएंड यूआरएल
         const BACKEND_URL = "https://arena-backen.onrender.com";
-        let masterUsersGlobalList = []; // सभी खिलाड़ियों की सूची स्टोर करने के लिए एरे
-        let currentSelectedUserMobile = ""; // जिस खिलाड़ी को एडिट कर रहे हैं उसका मोबाइल
+        let masterUsersGlobalList = []; // सभी खिलाड़ियों की सूची
+        let currentSelectedUserMobile = ""; // एडिट हो रहे खिलाड़ी का मोबाइल
 
         // पेज लोड होते ही सुरक्षा और ग्रिड खांचा तैयार करना
         document.addEventListener("DOMContentLoaded", () => {
@@ -373,13 +373,18 @@
             }
         }
 
+        // ⏰ मास्टर टाइमर लूप जो हर 10 सेकंड में शीट और UTR रिक्वेस्ट सिंक करेगा
         function unlockAdminDashboard() {
             document.getElementById("adminLockGateway").style.display = "none";
             document.getElementById("adminDashboardWrapper").style.display = "block";
             
-            // लाइव डेटाबेस सट्टा शीट और यूजर लिस्ट इंजन चालू करना (हर 10 सेकंड में ऑटो-सिंक)
             loadLiveSattaSheet();
-            setInterval(loadLiveSattaSheet, 10000);
+            loadLiveDepositRequests(); // नया UTR सिंक इंजन एक्टिवेटेड
+            
+            setInterval(() => {
+                loadLiveSattaSheet();
+                loadLiveDepositRequests();
+            }, 10000);
         }
 
         function handleAdminLogout() {
@@ -398,15 +403,12 @@
 
         // 🔀 SINGLE-PAGE VIEW SECTION SWITCHER (बिना पेज बदले डिब्बा बदलने का इंजन)
         function switchAdminSection(sectionId, sectionTitle) {
-            // ऊपर हेडर बार का टाइटल बदलना
             document.getElementById("currentSectionTitle").innerText = sectionTitle;
 
-            // पहले सभी व्यू सेक्शन्स को छुपा देना (Hide All)
             document.getElementById("view_info_overview").style.display = "none";
             const dynamicPanels = document.querySelectorAll(".dynamic-view-panel");
             dynamicPanels.forEach(panel => panel.style.display = "none");
 
-            // अब केवल चुने हुए सेक्शन वाले डिब्बे को दिखाना (Show Selected)
             if (sectionId === "info_overview") {
                 document.getElementById("view_info_overview").style.display = "block";
             } else {
@@ -414,17 +416,16 @@
                 if (targetPanel) targetPanel.style.display = "flex";
             }
 
-            // साइडबार मेन्यू आइटम्स का एक्टिव-टैब कलर बदलना
             const menuItems = document.querySelectorAll(".side-menu-item");
             menuItems.forEach(item => item.classList.remove("active-tab"));
             document.getElementById("tab_" + sectionId).classList.add("active-tab");
 
-            // साइडबार को ऑटोमैटिक बंद कर देना
             closeAdminSidebar();
         }
                 // 🔢 1 से 100 तक के सेल (डिब्बे) जनरेट करना
         function createAdminSheetDOM() {
             const grid = document.getElementById("adminMatrixGridDisplay");
+            if (!grid) return;
             grid.innerHTML = "";
             for (let i = 1; i <= 100; i++) {
                 const cell = document.createElement("div");
@@ -450,18 +451,19 @@
 
                     // लाइव पूल डेटा स्क्रीन पर छापना
                     document.getElementById("statTotalUsers").innerText = data.total_users || 0;
-                    document.getElementById("statTotalBets").innerText = ` can_sym_0₹${data.total_active_bets_money}`;
-                    document.getElementById("totalLivePoolMoney").innerText = ` can_sym_0₹${data.total_active_bets_money}`;
+                    document.getElementById("statTotalBets").innerText = `₹${data.total_active_bets_money || 0}`;
+                    document.getElementById("totalLivePoolMoney").innerText = `₹${data.total_active_bets_money || 0}`;
                     
-                    const sheet = data.sheet; 
-                    const tags = data.tags;
+                    const sheet = data.sheet || {}; 
+                    const tags = data.tags || {};
 
                     // पूरे 1 से 100 डिब्बों में पैसे भरना और कलर रीसेट करना
                     for (let i = 1; i <= 100; i++) {
                         const cell = document.getElementById(`sheetCell_${i}`);
                         const amtLabel = document.getElementById(`cellAmt_${i}`);
+                        if (!cell || !amtLabel) continue;
+                        
                         const currentAmt = sheet[i.toString()] || 0;
-
                         amtLabel.innerText = ` can_sym_0₹${currentAmt}`;
                         cell.style.background = "#111827"; 
                         cell.style.borderColor = "#374151";
@@ -470,31 +472,31 @@
                     }
 
                     // 🔴 लाल रंग: Highest Betted Number (अधिकतम हाउस रिस्क)
-                    if (tags.highest !== "0") {
+                    if (tags.highest && tags.highest !== "0") {
                         const highCell = document.getElementById(`sheetCell_${tags.highest}`);
                         if(highCell) {
                             highCell.style.background = "#ef4444";
                             highCell.style.borderColor = "#b91c1c";
-                            document.getElementById("tagHighestNum").innerText = `#${tags.highest} ( can_sym_0₹${sheet[tags.highest]})`;
+                            document.getElementById("tagHighestNum").innerText = `#${tags.highest} ( can_sym_0₹${sheet[tags.highest] || 0})`;
                         }
                     } else {
                         document.getElementById("tagHighestNum").innerText = "None ( can_sym_0₹0)";
                     }
 
                     // 🟡 पीला रंग: Lowest Betted Number (न्यूनतम पेआउट ज़ोन)
-                    if (tags.lowest !== "0") {
+                    if (tags.lowest && tags.lowest !== "0") {
                         const lowCell = document.getElementById(`sheetCell_${tags.lowest}`);
                         if(lowCell) {
                             lowCell.style.background = "#f59e0b";
                             lowCell.style.borderColor = "#b45309";
-                            document.getElementById("tagLowestNum").innerText = `#${tags.lowest} ( can_sym_0₹${sheet[tags.lowest]})`;
+                            document.getElementById("tagLowestNum").innerText = `#${tags.lowest} ( can_sym_0₹${sheet[tags.lowest] || 0})`;
                         }
                     } else {
                         document.getElementById("tagLowestNum").innerText = "None ( can_sym_0₹0)";
                     }
 
                     // 🟢 गहरा हरा रंग: Zero Money Numbers (100% एडमिन प्रॉफिट)
-                    document.getElementById("tagZeroCount").innerText = `${tags.zero_count} / 100 Numbers`;
+                    document.getElementById("tagZeroCount").innerText = `${tags.zero_count || 100} / 100 Numbers`;
                     for (let i = 1; i <= 100; i++) {
                         if ((sheet[i.toString()] || 0) === 0) {
                             const zeroCell = document.getElementById(`sheetCell_${i}`);
@@ -512,6 +514,7 @@
                 // 👥 MongoDB डेटाबेस से लाइव खिलाड़ियों की टेबल रेंडर करना
         function renderLivePlayersTable() {
             const tableArea = document.getElementById("membersTableLiveArea");
+            if (!tableArea) return;
             if (!masterUsersGlobalList || masterUsersGlobalList.length === 0) {
                 tableArea.innerHTML = `<p style="text-align: center; color: #9ca3af; font-size: 11px; padding: 10px;">डेटाबेस में कोई खिलाड़ी पंजीकृत नहीं है।</p>`;
                 return;
@@ -521,7 +524,6 @@
             masterUsersGlobalList.forEach(user => {
                 const row = document.createElement("div");
                 row.className = "member-data-row";
-                // क्लिक करने पर उसी खिलाड़ी का मास्टर ऐक्शन पॉपअप खुल जाएगा
                 row.setAttribute("onclick", `openPlayerActionModal('${user.mobile}')`);
 
                 const isBanned = user.status === "BANNED";
@@ -539,29 +541,97 @@
             });
         }
 
-        // 📜 खिलाड़ी का मास्टर ऐक्शन पॉपअप रूम खोलना
+        // 📩 लाइव डेटाबेस से खिलाड़ियों की UTR डिपॉजिट रिक्वेस्ट लोड करने का नया इंजन
+        async function loadLiveDepositRequests() {
+            const container = document.getElementById("liveDepositRequestContainer");
+            if (!container) return;
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/admin/pending-deposits`);
+                const result = await res.json();
+
+                if (result.status === "success" && result.requests.length > 0) {
+                    container.innerHTML = ""; 
+                    
+                    result.requests.forEach(req => {
+                        const card = document.createElement("div");
+                        card.className = "premium-data-card";
+                        card.style = "margin-bottom: 10px;";
+                        
+                        card.innerHTML = `
+                            <div class="premium-card-row"><span>👤 Player Mobile:</span><span><strong>${req.user_id}</strong></span></div>
+                            <div class="premium-card-row"><span>💰 Pay Amount:</span><span><strong style="color:#4ade80;">₹${parseFloat(req.amount).toFixed(2)}</strong></span></div>
+                            <div class="premium-card-row"><span>🆔 UTR Number:</span><span><strong>${req.utr}</strong></span></div>
+                            <div class="action-btns-row">
+                                <button class="sub-action-btn btn-sub-pass" onclick="processDepositAction('${req._id}', '${req.user_id}', ${req.amount}, 'approve')">Approve</button>
+                                <button class="sub-action-btn btn-sub-fail" onclick="processDepositAction('${req._id}', '${req.user_id}', ${req.amount}, 'decline')">Decline</button>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = `<div class="premium-data-card" style="text-align: center; color: #9ca3af;"><p>📩 वर्तमान में कोई नई यूटीआर डिपॉजिट रिक्वेस्ट लंबित नहीं है।</p></div>`;
+                }
+            } catch (err) {
+                console.log("Deposit requests waiting for server...");
+            }
+        }
+
+        // 🎯 डेटाबेस डायरेक्ट एक्शन (Approve होने पर सीधे MongoDB वॉलेट में पैसे जोड़ना)
+        async function processDepositAction(requestId, playerMobile, amountVal, actionType) {
+            if (!confirm(`क्या आप इस रिक्वेस्ट को ${actionType === 'approve' ? 'स्वीकार' : 'अस्वीकार'} करना चाहते हैं?`)) return;
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/admin/process-deposit`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        request_id: requestId,
+                        mobile: playerMobile,
+                        amount: amountVal,
+                        action: actionType
+                    })
+                });
+                const result = await res.json();
+
+                if (result.status === "success") {
+                    alert(`🎉 रिक्वेस्ट सफलतापूर्वक ${actionType === 'approve' ? 'पास' : 'रिजेक्ट'} कर दी गई है!`);
+                    loadLiveDepositRequests(); 
+                    loadLiveSattaSheet();      
+                } else {
+                    alert("❌ एक्शन फेल: " + result.message);
+                }
+            } catch (err) {
+                alert("⚠ बैकएंड सर्वर से संपर्क टूटा!");
+            }
+        }
+                // 📜 खिलाड़ी का मास्टर ऐक्शन पॉपअप रूम खोलना
         function openPlayerActionModal(mobileNum) {
             currentSelectedUserMobile = mobileNum;
             const user = masterUsersGlobalList.find(u => u.mobile === mobileNum);
             if (!user) return;
 
             const modalDetails = document.getElementById("modalPlayerInfoDetails");
-            modalDetails.innerHTML = `
-                <div>👤 <strong>Player Name:</strong> <span style="color:#fff;">${user.name}</span></div>
-                <div>🆔 <strong>Unique UID:</strong> <span style="color:#38bdf8;">#${user.uid}</span></div>
-                <div>📱 <strong>Mobile Number:</strong> <span style="color:#fff;">${user.mobile}</span></div>
-                <div>📧 <strong>Email Address:</strong> <span style="color:#9ca3af;">${user.email || '--'}</span></div>
-                <div>💰 <strong>Live Balance:</strong> <span style="color:#4ade80; font-weight:bold;">${user.balance}</span></div>
-                <div>🚨 <strong>Account Status:</strong> <span style="color:${user.status === 'BANNED' ? '#f87171' : '#4ade80'}; font-weight:bold;">${user.status}</span></div>
-            `;
+            if(modalDetails) {
+                modalDetails.innerHTML = `
+                    <div>👤 <strong>Player Name:</strong> <span style="color:#fff;">${user.name}</span></div>
+                    <div>🆔 <strong>Unique UID:</strong> <span style="color:#38bdf8;">#${user.uid}</span></div>
+                    <div>📱 <strong>Mobile Number:</strong> <span style="color:#fff;">${user.mobile}</span></div>
+                    <div>📧 <strong>Email Address:</strong> <span style="color:#9ca3af;">${user.email || '--'}</span></div>
+                    <div>💰 <strong>Live Balance:</strong> <span style="color:#4ade80; font-weight:bold;">${user.balance}</span></div>
+                    <div>🚨 <strong>Account Status:</strong> <span style="color:${user.status === 'BANNED' ? '#f87171' : '#4ade80'}; font-weight:bold;">${user.status}</span></div>
+                `;
+            }
 
             const banBtn = document.getElementById("modalBanBtn");
-            if (user.status === "BANNED") {
-                banBtn.innerText = "✅ UNBAN USER ID";
-                banBtn.style.background = "linear-gradient(135deg, #10b981, #059669)";
-            } else {
-                banBtn.innerText = "❌ BAN USER ID";
-                banBtn.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+            if (banBtn) {
+                if (user.status === "BANNED") {
+                    banBtn.innerText = "✅ UNBAN USER ID";
+                    banBtn.style.background = "linear-gradient(135deg, #10b981, #059669)";
+                } else {
+                    banBtn.innerText = "❌ BAN USER ID";
+                    banBtn.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+                }
             }
 
             document.getElementById("playerActionModal").style.display = "flex";
@@ -571,22 +641,18 @@
             document.getElementById("playerActionModal").style.display = "none";
             document.getElementById("modalCoinInput").value = "";
         }
-                // 🔍 यूजर्स वॉलेट & बैन ज़ोन में मैनुअल नंबर सर्च इंजन
+
+        // 🔍 यूजर्स वॉलेट & बैन ज़ोन में मैन्युअल सर्च फ़ंक्शन
         function handleManualUserSearch() {
             const inputVal = document.getElementById("searchUserMobileInput").value.trim();
             const resultArea = document.getElementById("manualSearchPlayerResultArea");
-            
             if (!inputVal) { alert("कृपया मोबाइल नंबर या UID दर्ज करें!"); return; }
 
-            // ग्लोबल लिस्ट में मोबाइल या UID से मैच करना
             const user = masterUsersGlobalList.find(u => u.mobile === inputVal || u.uid === inputVal);
-            
             if (!user) {
                 resultArea.innerHTML = `<p style="color:#f87171; text-align:center; font-size:12px; margin-top:10px;">❌ खिलाड़ी डेटाबेस में नहीं मिला!</p>`;
                 return;
             }
-
-            // मिलने पर उसी खिलाड़ी का मास्टर ऐक्शन पॉपअप रूम सीधे खोल देना
             resultArea.innerHTML = "";
             openPlayerActionModal(user.mobile);
         }
@@ -596,16 +662,29 @@
             const coinAmt = parseFloat(document.getElementById("modalCoinInput").value);
             if (!coinAmt || coinAmt <= 0) { alert("कृपया एक सही राशि दर्ज करें!"); return; }
 
-            const confirmMsg = actionType === 'add' ? 
-                `क्या आप इस खिलाड़ी के खाते में ₹${coinAmt} जोड़ना चाहते हैं?` : 
-                `क्या आप इस खिलाड़ी के खाते से ₹${coinAmt} काटना चाहते हैं?`;
+            if (!confirm(`क्या आप इस खिलाड़ी के खाते में ₹${coinAmt} ${actionType === 'add' ? 'जोड़ना' : 'घटना'} चाहते हैं?`)) return;
 
-            if (!confirm(confirmMsg)) return;
-
-            // नोट: हम डमी फ्रंटएंड अलर्ट दे रहे हैं, बैकएंड API इंटीग्रेशन के लिए
-            alert(`🎯 वॉलेट अपडेट सफल!\nखिलाड़ी के खाते में राशि ${actionType === 'add' ? 'जोड़' : 'घटा'} दी गई है।`);
-            closePlayerModal();
-            loadLiveSattaSheet(); // सट्टा शीट और टेबल ताज़ा करना
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/admin/update-balance`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mobile: currentSelectedUserMobile,
+                        amount: coinAmt,
+                        action: actionType // 'add' या 'deduct'
+                    })
+                });
+                const result = await res.json();
+                if (result.status === "success") {
+                    alert(`🎯 वॉलेट अपडेट सफल!`);
+                    closePlayerModal();
+                    loadLiveSattaSheet();
+                } else {
+                    alert("❌ फेल: " + result.message);
+                }
+            } catch (err) {
+                alert("⚠ बैकएंड सर्वर से संपर्क टूटा!");
+            }
         }
 
         // 🛑 एक क्लिक में खिलाड़ी की आईडी को परमानेंट BAN या UNBAN करना
@@ -613,19 +692,32 @@
             const user = masterUsersGlobalList.find(u => u.mobile === currentSelectedUserMobile);
             if (!user) return;
 
-            const currentStatus = user.status;
-            const newStatus = currentStatus === "BANNED" ? "ACTIVE" : "BANNED";
-
+            const newStatus = user.status === "BANNED" ? "ACTIVE" : "BANNED";
             if (!confirm(`क्या आप वाकई इस आईडी को ${newStatus} करना चाहते हैं?`)) return;
 
-            alert(` Id Status Lock: खिलाड़ी को सफलतापूर्वक ${newStatus === 'BANNED' ? 'बैन ❌' : 'अनबैन ✅'} कर दिया गया है!`);
-            closePlayerModal();
-            loadLiveSattaSheet(); // डेटाबेस सिंक रिफ्रेश
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/admin/toggle-ban`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        mobile: currentSelectedUserMobile,
+                        status: newStatus
+                    })
+                });
+                const result = await res.json();
+                if (result.status === "success") {
+                    alert(`Status Saved: खिलाड़ी को सफलतापूर्वक ${newStatus === 'BANNED' ? 'बैन ❌' : 'अनबैन ✅'} कर दिया गया है!`);
+                    closePlayerModal();
+                    loadLiveSattaSheet();
+                }
+            } catch (err) {
+                alert("⚠ बैकएंड सर्वर से संपर्क टूटा!");
+            }
         }
-                // 🎯 8 मार्केट्स एडवांस बुकिंग रिजल्ट घोषणा या ऑटो-विनर इंजन ट्रिगर
+
+        // 🎯 8 मार्केट्स एडवांस बुकिंग रिजल्ट घोषणा या ऑटो-विनर इंजन ट्रिगर
         async function submitMarketResult(marketRoundId, inputElementId) {
             const numInput = document.getElementById(inputElementId).value.trim();
-            
             let confirmMsg = `क्या आप वाकई इस मार्केट का रिज़ल्ट घोषित करना चाहते हैं?\n`;
             if (!numInput) {
                 confirmMsg += `👉 बॉक्स खाली है, इसलिए बैकएंड का "MIN-LOAD AUTO-WINNER ENGINE" ऑटोमैटिक सबसे कम पैसों वाला विजेता घोषित कर देगा!`;
@@ -649,12 +741,12 @@
                 if (result.status === "success") {
                     alert(`🎉 रिज़ल्ट सफलतापूर्वक जारी!\n${result.message}`);
                     document.getElementById(inputElementId).value = "";
-                    loadLiveSattaSheet(); // सट्टा शीट को ताज़ा करना
+                    loadLiveSattaSheet(); 
                 } else {
                     alert("❌ घोषणा फेल: " + result.message);
                 }
             } catch (err) {
-                alert("⚠ बैकएंड सर्वर से संपर्क टूटा! कृपया चेक करें कि 'app.py' चालू है या नहीं।");
+                alert("⚠ बैकएंड सर्वर से संपर्क टूटा!");
             }
         }
     </script>
