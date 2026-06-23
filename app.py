@@ -113,18 +113,18 @@ def login_user():
         # 3. अगर नए वॉलेट का बैलेंस गायब है, तो डिफ़ॉल्ट रूप से ₹0 या ₹50 सेट करें
         if user.get('balance') is None:
             update_data['balance'] = 0
+            
+    if update_data:
+        db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
 
-           if update_data:
-            db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
-
-        return jsonify({
-            "success": True,
-            "status": "success",
-            "message": "Login successful",
-            "user_mobile": user.get('mobile'),
-            "user_name": user.get('name') or update_data.get('name', 'Arena User')
-        }), 200
-
+    return jsonify({
+        "success": True,
+        "status": "success",
+        "message": "Login successful",
+        "user_mobile": user.get('mobile'),
+        "user_name": user.get('name') or update_data.get('name', 'Arena User')
+    }), 200
+    
 @app.route('/api/user/profile', methods=['GET'])
 def get_user_profile():
     try:
