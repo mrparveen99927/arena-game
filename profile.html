@@ -85,10 +85,11 @@
         <!-- 📊 प्रोफाइल मेन्यू लिस्ट -->
         <div class="menu-list">
             <!-- 📊 डायनामिक बेट हिस्ट्री ट्रिगर -->
-            <div class="menu-item" onclick="toggleBetHistoryView()">
-                <div class="menu-left"><span class="menu-icon">📊</span><span>My Bet History</span></div>
-                <span class="arrow-right">▶</span>
-            </div>
+            <!-- 📊 माय बेट हिस्ट्री - जो क्लिक करते ही नए पेज (history.html) पर ले जाएगी -->
+<div class="menu-item" onclick="window.location.href='history.html'">
+    <div class="menu-left"><span class="menu-icon">📊</span><span>My Bet History</span></div>
+    <span class="arrow-right">▶</span>
+</div>
             
             <!-- लाइव बेट हिस्ट्री दिखाने का हिडन ज़ोन -->
             <div id="betHistoryDisplayZone" class="history-display-zone">
