@@ -37,6 +37,7 @@
 </head>
 <body>
     <div class="app-container">
+    <div id="status-message" style="font-weight: bold; text-align: center; margin: 15px; font-size: 20px; color: #ffffff;">Checking system status...</div>
         <div class="top-bar">
             <div class="top-left"><a href="templates_dashboard.html" class="back-arrow">⬅️</a><span class="page-title">Faridabad Arena (Class A)</span></div>
             <div class="balance-strip">💎 <span id="currentWallet">0</span> Coins</div>
@@ -201,67 +202,163 @@ function closeBetModal() {
 async function submitFinalBetToDB() {
     var popAmt = parseInt(document.getElementById("popCoinInput").value);
     var finalTotal = selectedArr.length * popAmt;
-    const playerUID = sessionStorage.getItem('uid') || localStorage.getItem('uid') || "admin";
+    const userMobile = localStorage.getItem('user_mobile') || localStorage.getItem('mobile') || "admin";
 
-    if (popAmt < 5 || popAmt > 100) { alert("    5  100    !"); return; }
-    if (finalTotal > walletCoins) { 
-        alert("  !   " + finalTotal + "       " + walletCoins + "  "); 
-        return; 
-    }
+    if (popAmt < 5 || popAmt > 100) { alert("  5  100 !"); return; }
+    if (finalTotal > walletCoins) { alert("  ! : " + walletCoins); return; }
 
     try {
-        const response = await fetch(`https://arena-backen.onrender.com`, {
+        const response = await fetch(`https://onrender.com`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                uid: playerUID,
-                prediction: "95X_MATRIX",
-                amount: finalTotal,
-                amt_per_number: popAmt,
-                selected_numbers: selectedArr,
-                round_id: localStorage.getItem('current_round_id') || "ROUND_01"
+                user_id: userMobile,
+                numbers: selectedArr,
+                amount: popAmt,
+                round_id: localStorage.getItem('current_round_id') || "DAILY_FARIDABAD"
             })
         });
-
         const result = await response.json();
-
         if (response.ok && result.status === "success") {
             walletCoins = result.new_balance;
-            document.getElementById("currentWallet").innerText = walletCoins;
-            
-            alert(`  !      \n   ${finalTotal}    `);
-            
+            if (document.getElementById("currentWallet")) {
+                document.getElementById("currentWallet").innerText = walletCoins;
+            }
+            localStorage.setItem('balance', walletCoins);
+            alert("   !");
             document.getElementById("coinInput").value = "";
             closeBetModal();
             clearAll();
         } else {
-            alert(" : " + (result.message || "     "));
+            alert(": " + (result.message || ""));
         }
     } catch (err) {
-        console.error("Database Bet Error:", err);
-        alert("        !");
+        console.error("Bet Error:", err);
+        alert(" !");
     }
 }
 
-// ======= 4.         =======
+// ======= 4. REAL-TIME WALLET SYNC =======
 async function syncDatabaseWallet() {
-    const playerUID = sessionStorage.getItem('uid') || localStorage.getItem('uid') || "admin"; 
+    const userMobile = localStorage.getItem('user_mobile') || localStorage.getItem('mobile');
+    if (!userMobile) {
+        console.error("User mobile not found!");
+        return;
+    }
     try {
-        const response = await fetch(`https://arena-backen.onrender.com{playerUID}`);
+        const response = await fetch(`https://onrender.com{userMobile}`);
         const userData = await response.json();
         if (userData && userData.balance !== undefined) {
             walletCoins = parseFloat(userData.balance);
-            document.getElementById("currentWallet").innerText = walletCoins;
+            const walletSpan = document.getElementById("currentWallet");
+            if (walletSpan) {
+                walletSpan.innerText = walletCoins;
+            }
+            localStorage.setItem('balance', walletCoins);
         }
     } catch (err) {
-        console.error("  :", err);
+        console.error("Wallet sync error:", err);
     }
 }
+
+
 
 //       
 window.addEventListener('DOMContentLoaded', function() {
     syncDatabaseWallet();
 });
+// ==========================================
+//  STEP 1: FRONTEND AUTO-LOCK LOGIC ( )
+// ==========================================
+async function checkGameTimingAndLock() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/game-status`);
+        const data = await response.json();
+        
+        const statusMessage = document.getElementById("status-message"); 
+        const gridButtons = document.querySelectorAll(".grid-btn"); 
+        const confirmBtn = document.getElementById("confirm-bet-btn"); 
+
+        if (data.status === "closed") {
+            if (statusMessage) {
+                statusMessage.innerText = data.message;
+                statusMessage.style.color = "#ef4444";
+            }
+            gridButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = "0.4";
+                btn.style.cursor = "not-allowed";
+            });
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.style.background = "#475569";
+            }
+        } else {
+            if (statusMessage) {
+                statusMessage.innerText = data.message;
+                statusMessage.style.color = "#22c55e";
+            }
+            gridButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+            });
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.style.background = "#38bdf8";
+            }
+        }
+    } catch (error) {
+        console.error("Timing  :", error);
+    }
+}
+
+//   (Run)     window.onload      :
+setInterval(checkGameTimingAndLock, 5000);
+checkGameTimingAndLock();
+//  4:40 PM -    
+async function checkGameTimingAndLock() {
+    try {
+        const response = await fetch("https://onrender.com");
+        const data = await response.json();
+        
+        const statusMessage = document.getElementById("status-message"); 
+        const gridButtons = document.querySelectorAll(".grid-btn"); //   
+        const confirmBtn = document.getElementById("confirm-bet-btn"); //  
+
+        if (data.status === "closed") {
+            if (statusMessage) {
+                statusMessage.innerText = data.message;
+                statusMessage.style.color = "#ef4444"; //  
+            }
+            gridButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = "0.4";
+                btn.style.cursor = "not-allowed";
+            });
+            if (confirmBtn) confirmBtn.disabled = true;
+        } else {
+            if (statusMessage) {
+                statusMessage.innerText = data.message;
+                statusMessage.style.color = "#22c55e"; //  
+            }
+            gridButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+                btn.style.cursor = "pointer";
+            });
+            if (confirmBtn) confirmBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error("Timing  :", error);
+    }
+}
+
+//  5   - 
+setInterval(checkGameTimingAndLock, 5000);
+checkGameTimingAndLock();
+
+
 </script>
 </body>
 </html>
