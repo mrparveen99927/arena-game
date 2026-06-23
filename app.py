@@ -22,10 +22,11 @@ def home():
     return jsonify({"status": "running", "message": "Alpha Arena Backend is Live!"}), 200
 
 # 🎯 2. NEW USER REGISTRATION WITH ₹50 BONUS
+# 🎯 2. NEW USER REGISTRATION WITH ₹50 BONUS
 @app.route('/api/register', methods=['POST'])
 def register_user():
     try:
-                data = request.json or {}
+        data = request.json or {}
         first_name = data.get('firstName') or data.get('first_name') or ""
         last_name = data.get('lastName') or data.get('last_name') or ""
         name = data.get('name') or f"{first_name} {last_name}".strip()
@@ -47,7 +48,7 @@ def register_user():
             "mobile": mobile,
             "email": email,
             "password": password,
-            "balance": 50,  # ₹50 Welcome Bonus
+            "balance": 50,
             "status": "active",
             "created_at": datetime.now(IST)
         }
