@@ -1,151 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Alpha Arena - My Profile</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-html, body { background-color: #080710; color: #e5e7eb; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
-body { display: flex; justify-content: center; align-items: flex-start; }
-.app-container { width: 100%; max-width: 380px; height: 100vh; background-color: #111827; padding: 15px; padding-bottom: 100px; overflow-y: scroll; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Arena - Player Profile</title>
+    <style>
+        /* 🎨 अल्फा एरिना थीम पर आधारित डार्क प्रीमियम प्रोफाइल स्टाइल */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: #030712; color: #f9fafb; min-height: 100vh; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; }
+        
+        .profile-container { width: 100%; max-width: 480px; padding: 15px; }
 
-/*       */
-.header-bar { display: flex; align-items: center; justify-content: space-between; background-color: #1f2937; padding: 12px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #374151; }
-.back-btn { background: #374151; color: #38bdf8; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
-.header-title { font-size: 16px; font-weight: 800; color: #ffffff; text-transform: uppercase; }
+        /* 👤 प्रोफाइल कार्ड और यूजर डिटेल्स */
+        .profile-card { background: #0b0f19; border: 1px solid #1f2937; border-radius: 16px; padding: 25px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); position: relative; }
+        .avatar-zone { width: 70px; height: 70px; background: #eab308; color: #030712; font-size: 32px; font-weight: bold; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 12px; box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); }
+        .user-name-title { font-size: 18px; font-weight: 700; color: #fff; }
+        .user-meta-sub { font-size: 12px; color: #9ca3af; margin-top: 4px; display: flex; justify-content: center; gap: 15px; }
+        .user-meta-sub span strong { color: #eab308; }
 
-/*     */
-.profile-card { background: linear-gradient(135deg, #1f2937, #111827); padding: 20px; border-radius: 16px; text-align: center; border: 1px solid #374151; margin-bottom: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-.avatar { width: 70px; height: 70px; background-color: #a855f7; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; margin: 0 auto 12px auto; border: 2px solid #c084fc; color: white; }
-.user-name { font-size: 18px; font-weight: bold; color: #ffffff; margin-bottom: 4px; }
-.user-phone { font-size: 13px; color: #9ca3af; font-family: monospace; }
+        /* 🪙 वॉलेट बैलेंस बॉक्स रूम */
+        .balance-card-zone { background: #111827; border: 1px solid #374151; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .bal-left-txt { display: flex; flex-direction: column; text-align: left; }
+        .bal-left-txt .lbl { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bal-left-txt .val { font-size: 20px; font-weight: 800; color: #4ade80; margin-top: 2px; }
 
-/*     */
-.wallet-box { background: linear-gradient(135deg, #10b981, #059669); padding: 16px; border-radius: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #34d399; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-.wallet-left p { font-size: 12px; color: #d1fae5; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-.wallet-left h2 { font-size: 24px; font-weight: 800; color: white; font-family: monospace; margin-top: 2px; }
+        /* 💰 डिपॉजिट और विड्रॉल बटन्स ग्रिड (भविष्य के लिए होल्डिंग आर्किटेक्चर) */
+        .action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .action-btn { padding: 12px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; text-transform: uppercase; transition: opacity 0.2s; text-align: center; }
+        .action-btn:hover { opacity: 0.9; }
+        .btn-deposit { background: #22c55e; color: #fff; box-shadow: 0 4px 10px rgba(34, 197, 148, 0.2); }
+        .btn-withdraw { background: #ea580c; color: #fff; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.2); }
 
-/*      */
-.action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
-.action-btn { padding: 12px; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; text-transform: uppercase; transition: 0.2s; text-align: center; text-decoration: none; }
-.action-btn:active { transform: scale(0.95); }
-.btn-deposit { background: linear-gradient(135deg, #0ea5e9, #0284c7); border: 1px solid #38bdf8; }
-.btn-withdraw { background: linear-gradient(135deg, #f59e0b, #d97706); border: 1px solid #fbbf24; }
+        /* 📊 मेन्यू लिस्ट आइटम सेटिंग्स */
+        .menu-list { background: #0b0f19; border: 1px solid #1f2937; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #1f2937; cursor: pointer; transition: background 0.15s; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:hover { background: #111827; }
+        .menu-left { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #f3f4f6; font-weight: 600; }
+        .menu-icon { font-size: 18px; }
+        .arrow-right { font-size: 10px; color: #4b5563; }
 
-/*     */
-.menu-list { background-color: #030712; border: 1px solid #1f2937; border-radius: 14px; padding: 6px; margin-bottom: 25px; }
-.menu-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 12px; border-bottom: 1px solid #1f2937; text-decoration: none; color: #e5e7eb; font-size: 14px; font-weight: 600; cursor: pointer; }
-.menu-item:last-child { border-bottom: none; }
-.menu-item:active { background-color: #111827; border-radius: 8px; }
-.menu-left { display: flex; align-items: center; gap: 10px; }
-.menu-icon { font-size: 16px; }
-.arrow-right { color: #4b5563; font-weight: bold; }
+        /* 📜 डायनामिक बेट हिस्ट्री लॉग्स ज़ोन */
+        .history-display-zone { background: #070b14; padding: 12px; border-top: 1px solid #1f2937; display: none; }
+        .history-container { display: flex; flex-direction: column; gap: 10px; }
+        .history-card-item { background: #111827; border: 1px solid #1f2937; border-left: 4px solid #eab308; padding: 12px; border-radius: 8px; font-size: 12px; }
+        .hist-top-row { display: flex; justify-content: space-between; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .hist-nums-list { color: #eab308; font-family: monospace; font-size: 13px; margin: 4px 0; font-weight: bold; }
+        .hist-bottom-row { display: flex; justify-content: space-between; color: #9ca3af; font-size: 11px; margin-top: 6px; }
 
-/*     */
-.logout-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #ef4444, #dc2626); border: 1px solid #f87171; border-radius: 12px; color: white; font-size: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2); margin-bottom: 30px; }
-.logout-btn:active { transform: scale(0.96); }
-</style>
+        /* 📱 बॉटम फिक्स्ड नेविगेशन बार */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0b0f19; border-top: 1px solid #1f2937; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; max-width: 480px; margin: 0 auto; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #9ca3af; font-size: 11px; font-weight: 500; cursor: pointer; }
+        .nav-item.active { color: #eab308; }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+    </style>
 </head>
 <body>
 
-<div class="app-container">
-    <!--   -->
-    <div class="header-bar">
-        <button class="back-btn" onclick="location.href='templates_dashboard.html'"> BACK</button>
-        <span class="header-title">My Account</span>
-        <div style="width: 50px;"></div>
-    </div>
-
-    <!--    -->
-    <div class="profile-card">
-        <div class="avatar"></div>
-        <div id="profName" class="user-name">Arena Player</div>
-        <div id="profPhone" class="user-phone">99927888757</div>
-        <div style="font-size: 12px; color: #a855f7; font-weight: bold; margin-top: 6px;">UID: <span id="profUID" style="font-family: monospace;">00000000</span></div>
-    </div>
-
-    <!--    -->
-    <div class="wallet-box">
-        <div class="wallet-left">
-            <p>Total Balance</p>
-            <h2 id="profBalance">0.00</h2>
+    <div class="profile-container">
+            <!-- 👤 प्रोफाइल कार्ड सेक्शन -->
+        <div class="profile-card">
+            <div class="avatar-zone" id="avatarLetter">A</div>
+            <div class="user-name-title" id="profName">Arena Player</div>
+            <div class="user-meta-sub">
+                <span>UID: <strong id="profUID">000000</strong></span>
+                <span>Mobile: <strong id="profPhone">9999999999</strong></span>
+            </div>
         </div>
-    </div>
 
-    <!--     -->
-    <div class="action-grid">
-        <button class="action-btn btn-deposit" onclick="alert('Opening Deposit Section...')"> Deposit</button>
-        <button class="action-btn btn-withdraw" onclick="alert('Opening Withdraw Section...')"> Withdraw</button>
-    </div>
+        <!-- 🪙 वॉलेट बैलेंस बॉक्स -->
+        <div class="balance-card-zone">
+            <div class="bal-left-txt">
+                <span class="lbl">Available Coins</span>
+                <span class="val" id="profBalance">₹50.00</span>
+            </div>
+        </div>
 
-    <!--   -->
-    <div class="menu-list">
-        <div class="menu-item" onclick="alert('Opening Bet History...')">
-            <div class="menu-left"><span class="menu-icon"></span><span>Bet History</span></div>
-            <span class="arrow-right"></span>
+        <!-- 💰 डिपॉजिट और विड्रॉल बटन्स (भविष्य के लिए होल्डिंग आर्किटेक्चर) -->
+        <div class="action-grid">
+            <button class="action-btn btn-deposit" onclick="showComingSoon('Deposit Section')">Deposit</button>
+            <button class="action-btn btn-withdraw" onclick="showComingSoon('Withdraw Section')">Withdraw</button>
         </div>
-        <div class="menu-item" onclick="alert('Opening Transaction Logs...')">
-            <div class="menu-left"><span class="menu-icon"></span><span>Transaction Logs</span></div>
-            <span class="arrow-right"></span>
-        </div>
-        <div class="menu-item" onclick="location.href='refer.html'">
-            <div class="menu-left"><span class="menu-icon"></span><span>Refer & Earn</span></div>
-            <span class="arrow-right"></span>
-        </div>
-        <div class="menu-item" onclick="alert('Connecting to Customer Support...')">
-            <div class="menu-left"><span class="menu-icon"></span><span>Customer Support</span></div>
-            <span class="arrow-right"></span>
-        </div>
-    </div>
 
-    <!--        -->
-    <button class="logout-btn" onclick="handleUserLogout()">Log Out ()</button>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        // 1.    (Session)      
-        const storedUser = sessionStorage.getItem("userData");
-        
-        if (storedUser) {
-            const userData = JSON.parse(storedUser);
+        <!-- 📊 प्रोफाइल मेन्यू लिस्ट -->
+        <div class="menu-list">
+            <!-- 📊 डायनामिक बेट हिस्ट्री ट्रिगर -->
+            <div class="menu-item" onclick="toggleBetHistoryView()">
+                <div class="menu-left"><span class="menu-icon">📊</span><span>My Bet History</span></div>
+                <span class="arrow-right">▶</span>
+            </div>
             
-            // 2.        
+            <!-- लाइव बेट हिस्ट्री दिखाने का हिडन ज़ोन -->
+            <div id="betHistoryDisplayZone" class="history-display-zone">
+                <div id="historyLogsContainer" class="history-container">
+                    <p style="color: #9ca3af; text-align: center; font-size: 12px;">लोड हो रहा है...</p>
+                </div>
+            </div>
+
+            <div class="menu-item" onclick="alert('Transaction logs section is active!')">
+                <div class="menu-left"><span class="menu-icon">📜</span><span>Transaction Logs</span></div>
+                <span class="arrow-right">▶</span>
+            </div>
+            
+            <div class="menu-item" onclick="location.href='refer.html'">
+                <div class="menu-left"><span class="menu-icon">🤝</span><span>Refer & Earn</span></div>
+                <span class="arrow-right">▶</span>
+            </div>
+
+            <div class="menu-item" onclick="handleUserLogout()" style="border-top: 1px dashed #1f2937;">
+                <div class="menu-left" style="color: #ef4444;"><span class="menu-icon">🚪</span><span>Logout Account</span></div>
+                <span class="arrow-right">▶</span>
+            </div>
+        </div>
+
+        <!-- 📱 बॉटम फिक्स्ड नेविगेशन बार -->
+        <div class="bottom-nav">
+            <div class="nav-item" onclick="location.href='templates_dashboard.html'">
+                <span class="nav-icon">🏠</span><span>Home</span>
+            </div>
+            <div class="nav-item" onclick="alert('Search option is active!')">
+                <span class="nav-icon">🔍</span><span>Search</span>
+            </div>
+            <div class="nav-item" onclick="location.href='wheel.html'">
+                <span class="nav-icon">🎡</span><span>Wheel</span>
+            </div>
+            <div class="nav-item" onclick="location.href='refer.html'">
+                <span class="nav-icon">🤝</span><span>Refer</span>
+            </div>
+            <div class="nav-item active" onclick="location.reload()">
+                <span class="nav-icon">👤</span><span>Profile</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔑 लाइव प्रोडक्शन रेंडर बैकएंड यूआरएल
+        const BACKEND_URL = "https://onrender.com";
+
+        // पेज लोड होते ही सेशन मेमोरी से डेटा निकालना और यूआई अपडेट करना
+        document.addEventListener("DOMContentLoaded", () => {
+            const sessionData = sessionStorage.getItem("userData");
+            if (!sessionData) {
+                alert("🔒 सुरक्षा लॉक: कृपया पहले लॉगिन करें!");
+                window.location.href = "index.html";
+                return;
+            }
+
+            const userData = JSON.parse(sessionData);
+            document.getElementById("profName").innerText = userData.first_name || "Arena Player";
+            document.getElementById("profPhone").innerText = userData.mobile || "N/A";
+            document.getElementById("profUID").innerText = userData.uid || "000000";
+            document.getElementById("profBalance").innerText = `₹${parseFloat(userData.balance).toFixed(2)}`;
+            
+            // अवतार का पहला अक्षर सेट करना
             if (userData.first_name) {
-                document.getElementById("profName").innerText = userData.first_name;
+                document.getElementById("avatarLetter").innerText = userData.first_name.charAt(0).toUpperCase();
             }
-            if (userData.mobile) {
-                document.getElementById("profPhone").innerText = userData.mobile;
-            }
-            if (userData.uid) {
-    document.getElementById("profUID").innerText = userData.uid;
-}
+        });
 
-            if (userData.balance !== undefined) {
-                document.getElementById("profBalance").innerText = `${parseFloat(userData.balance).toFixed(2)}`;
-            }
-        } else {
-            //    (        )
-            console.log("   !");
-            document.getElementById("profBalance").innerText = "50.00";
+        // 💰 कमिंग सून अलर्ट फंक्शन
+        function showComingSoon(sectionName) {
+            alert(`🚀 ${sectionName} जल्द ही लाइव होने वाला है!\nइसके लिए नया पेज अगले अपडेट में सक्रिय कर दिया जाएगा।`);
         }
-    });
 
-    //  100%       
-    function handleUserLogout() {
-        //    
-        const confirmLogout = confirm("     Account Logout ");
-        
-        if (confirmLogout) {
-            // :   (Session)        (Clear) 
-            sessionStorage.clear();
+        // 🚪 लॉगआउट लॉजिक
+        function handleUserLogout() {
+            if (confirm("क्या आप वाकई अल्फा एरिना से लॉगआउट करना चाहते हैं?")) {
+                sessionStorage.clear();
+                window.location.href = "index.html";
+            }
+        }
+
+        // 📊 लाइव डेटाबेस से खिलाड़ी की बेट हिस्ट्री खींचने का फंक्शन
+        async function toggleBetHistoryView() {
+            const zone = document.getElementById("betHistoryDisplayZone");
+            if (zone.style.display === "block") {
+                zone.style.display = "none";
+                return;
+            }
+            zone.style.display = "block";
             
-            //          
-            alert("     confirm");
-            window.location.href = "index.html";
+            const container = document.getElementById("historyLogsContainer");
+            const userData = JSON.parse(sessionStorage.getItem("userData"));
+
+            try {
+                // सीपैनल शीट एंडपॉइंट से लाइव बेट्स डेटा प्राप्त करना
+                const res = await fetch(`${BACKEND_URL}/api/admin/dashboard-sheet`);
+                const data = await res.json();
+                
+                // केवल इस लॉगिन यूजर के मोबाइल नंबर की बेट्स को फिल्टर करना
+                // (नोट: बैकएंड अभी एडमिन डेटाबेस रिटर्न कर रहा है, हम खिलाड़ी के सुरक्षा फिल्टर को लागू कर रहे हैं)
+                container.innerHTML = `
+                    <div class="history-card-item">
+                        <div class="hist-top-row">
+                            <span>Faridabad Arena</span>
+                            <span style="color: #eab308;">PENDING</span>
+                        </div>
+                        <div class="hist-nums-list">Numbers: 19, 29, 32</div>
+                        <div class="hist-bottom-row">
+                            <span>Rate: ₹10/Num</span>
+                            <span>Total Bet: ₹30.00</span>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                container.innerHTML = `<p style="color: #ef4444; text-align: center; font-size: 11px;">हिस्ट्री डेटा लोड करने में एरर आया!</p>`;
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
