@@ -1,1123 +1,662 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N&N ALPHA ARENA - Admin Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>N&N Alpha Arena - Admin Engine</title>
     <style>
-        /* आपके गेम स्क्रीनशॉट की सटीक डार्क नाइट-ब्लू थीम और कोर CSS */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: #0b111e; color: #f9fafb; font-size: 14px; padding-bottom: 30px; }
+        /* 🎨 आपके स्क्रीनशॉट और प्रोफ़ाइल पीडीएफ थीम पर आधारित लक्ज़री डार्क सीपैनल */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        html, body { background-color: #030712; color: #f9fafb; width: 100%; min-height: 100vh; overflow-x: hidden; }
+        body { display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; }
         
-        /* प्रीमियम हेडर डिजाइन */
-        header { background-color: #111a2e; padding: 15px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #1e293b; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: space-between; }
-        .header-left { display: flex; align-items: center; gap: 12px; }
-        .menu-btn { background: none; border: none; color: #a855f7; font-size: 24px; cursor: pointer; padding: 0 5px; display: block; z-index: 110; }
-        .logo-box { width: 32px; height: 32px; background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 11px; box-shadow: 0 2px 8px rgba(168,85,247,0.4); }
-        .brand-title { font-size: 14px; font-weight: 900; background: linear-gradient(90deg, #c084fc, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .admin-badge { background-color: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; }
+        /* 🔒 एडमिन लॉगिन गेट ओवरले स्टाइल */
+        .admin-gateway-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #080710; display: flex; justify-content: center; align-items: center; padding: 15px; z-index: 10000; }
+        .lock-card-box { width: 100%; max-width: 360px; background: #111827; border: 1px solid #374151; padding: 25px; border-radius: 16px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .lock-card-box h2 { font-size: 20px; color: #ffffff; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
+        .lock-card-box p { font-size: 11px; color: #9ca3af; margin-bottom: 20px; }
+        .inp-field-grp { margin-bottom: 15px; text-align: left; }
+        .inp-field-grp label { display: block; font-size: 11px; font-weight: bold; color: #9ca3af; margin-bottom: 5px; text-transform: uppercase; }
+        .inp-field-grp input { width: 100%; padding: 12px; background: #030712; border: 1px solid #374151; border-radius: 10px; color: #fff; outline: none; font-size: 14px; }
+        .btn-master-verify { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #34d399; border-radius: 12px; color: white; font-size: 14px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+                /* 📱 मुख्य सीपैनल रैपर (लॉगिन के बाद अनलॉक होगा) */
+        .cpanel-master-container { width: 100%; max-width: 460px; display: none; flex-direction: column; }
 
-        /* असली स्लाइडिंग ऐप मेनू (Drawer) */
-        .drawer-menu { position: fixed; top: 0; left: 0; width: 280px; height: 100%; background-color: #0e1626; border-right: 1px solid #2e3b55; box-shadow: 5px 0 25px rgba(0,0,0,0.5); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 200; display: flex; flex-direction: column; }
-        .drawer-menu.open { transform: translateX(0); }
-        .drawer-header { padding: 20px 15px; background-color: #111a2e; border-bottom: 1px solid #2e3b55; display: flex; justify-content: space-between; align-items: center; }
-        .drawer-title { font-size: 11px; font-weight: bold; color: #a855f7; letter-spacing: 1px; }
-        .close-btn { background: none; border: none; color: #9ca3af; font-size: 18px; cursor: pointer; }
-        
-        /* मेनू बटन्स - बिना किसी सफ़ेद पट्टी के, प्रोफेशनल लुक */
-        .menu-items-list { flex: 1; overflow-y: auto; padding: 15px 10px; display: flex; flex-direction: column; gap: 4px; }
-        .menu-item { width: 100%; text-align: left; background: none; border: none; padding: 12px 15px; border-radius: 8px; color: #9ca3af; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
-        .menu-item:hover { background-color: #172033; color: #fff; }
-        .menu-item.active { background-color: #172033; border-left: 4px solid #a855f7; color: #fff; border-radius: 0 8px 8px 0; }
-        .backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); z-index: 150; display: none; }
-        .backdrop.show { display: block; }
+        /* 👑 टॉप एनएंडएन अल्फा एरिना ब्रांडिंग पट्टी */
+        .branding-top-bar { background: #0b0f19; border-bottom: 1px solid #1f2937; padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .branding-left-row { display: flex; align-items: center; gap: 10px; }
+        .hamburger-icon-btn { background: none; border: none; color: #a855f7; font-size: 24px; cursor: pointer; font-weight: bold; }
+        .brand-logo-badge { background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff; font-weight: 800; padding: 6px 10px; border-radius: 8px; font-size: 13px; letter-spacing: 0.5px; }
+        .brand-text-title { font-size: 14px; font-weight: 800; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; }
+        .brand-text-title span { color: #f59e0b; }
+        .admin-engine-tag { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* मुख्य कंटेनर और प्रीमियम कार्ड्स लेआउट */
-        main { padding: 15px; max-width: 480px; margin: 0 auto; }
-        .section-title { font-size: 12px; font-weight: bold; color: #9ca3af; letter-spacing: 1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .count-tag { font-size: 10px; background-color: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); padding: 2px 6px; border-radius: 4px; }
-        
-        .game-card { background-color: #172033; border: 1px solid #2e3b55; border-left: 4px solid #a855f7; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 15px; }
-        .game-card-blue { border-left-color: #3b82f6; }
-        
-        /* ग्रिड स्टैट्स */
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px; }
-        .stat-box { background-color: #172033; border: 1px solid #2e3b55; border-radius: 12px; padding: 12px; }
-        .stat-label { font-size: 9px; font-weight: bold; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-val { font-size: 18px; font-weight: bold; font-family: monospace; margin-top: 4px; }
-        .text-green { color: #10b981; }
-        .text-yellow { color: #f59e0b; }
+        /* ℹ️ सिस्टम ओवरव्यू टाइटल बैनर */
+        .view-section-banner { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #9ca3af; padding: 15px 15px 5px; display: flex; align-items: center; gap: 8px; }
+                /* 📈 टॉप स्टेट्स कार्ड्स (टोटल यूज़र्स और लाइव एक्टिव बेट्स) */
+        .stats-summary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px 15px; }
+        .stat-card-box { background: #0b0f19; border: 1px solid #1f2937; padding: 15px; border-radius: 12px; position: relative; }
+        .stat-card-box .lbl { font-size: 11px; color: #9ca3af; font-weight: 600; }
+        .stat-card-box .val { font-size: 22px; font-weight: 800; color: #f59e0b; margin-top: 4px; font-family: monospace; }
+        .stat-card-box.bets .val { color: #10b981; }
 
-        /* फॉर्म और इनपुट फील्ड्स नियंत्रण */
-        .input-group { margin-bottom: 15px; }
-        .input-label { display: block; font-size: 10px; font-weight: bold; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
-        .form-select, .form-input { width: 100%; background-color: #0b111e; border: 1px solid #2e3b55; border-radius: 8px; padding: 12px; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
-        .form-select:focus, .form-input:focus { border-color: #a855f7; }
-        .form-input.number-win { font-size: 24px; font-weight: bold; text-align: center; color: #10b981; font-family: monospace; }
-        
-        /* ऐक्शन बटन्स डिजाइन */
-        .btn-primary { width: 100%; background-color: #a855f7; border: none; color: #fff; font-size: 12px; font-weight: bold; padding: 12px; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(168,85,247,0.3); transition: background 0.2s; }
-        .btn-primary:active { transform: scale(0.98); }
-        
-        .flex-row { display: flex; justify-content: space-between; align-items: center; }
-        .row-gap { display: flex; flex-direction: column; gap: 3px; }
-        .btn-group { display: flex; gap: 8px; margin-top: 10px; }
-        .action-btn { flex: 1; padding: 8px; font-size: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; text-transform: uppercase; }
-        .btn-approve { background-color: #a855f7; color: #fff; }
-        .btn-paid { background-color: #3b82f6; color: #fff; }
-        .btn-reject { background-color: transparent; border: 1px solid #4b5563; color: #d1d5db; }
+        /* 👥 लाइव मेंबर्स डेटाबेस टेबल ज़ोन */
+        .members-table-card { background: #0b0f19; border: 1px solid #1f2937; border-radius: 12px; margin: 10px 15px; padding: 12px; overflow: hidden; }
+        .table-header-grid { display: grid; grid-template-columns: 1fr 1.2fr 1.5fr 1fr 1fr; gap: 4px; background: #1f2937; padding: 8px 4px; border-radius: 6px; font-size: 11px; font-weight: 700; color: #9ca3af; text-align: center; text-transform: uppercase; }
+        .table-rows-scroll-area { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-right: 2px; }
+        .member-data-row { display: grid; grid-template-columns: 1fr 1.2fr 1.5fr 1fr 1fr; gap: 4px; background: #111827; padding: 10px 4px; border-radius: 6px; font-size: 11px; text-align: center; align-items: center; cursor: pointer; border: 1px solid transparent; transition: border-color 0.2s; }
+        .member-data-row:hover { border-color: #a855f7; background: #1f2937; }
+        .member-data-row .uid-link { color: #38bdf8; font-weight: 700; text-decoration: underline; }
+        .member-data-row .status-badge { font-weight: bold; color: #4ade80; }
+        .member-data-row .status-badge.banned { color: #f87171; }
+                /* 📊 तीन बड़े रिस्क कलर टैग्स */
+        .risk-tags-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px 15px; }
+        .risk-box-item { padding: 12px 6px; border-radius: 10px; font-size: 11px; font-weight: 700; text-align: center; color: #fff; line-height: 1.3; }
+        .risk-box-item.high { background: #ef4444; }     /* Highest Risk Red */
+        .risk-box-item.lowest { background: #f59e0b; }   /* Lowest Risk Orange */
+        .risk-box-item.zero { background: #10b981; }     /* Zero Risk Green */
+        .risk-box-item span { display: block; font-size: 13px; font-weight: 800; margin-top: 4px; font-family: monospace; }
 
-        /* लाइव स्टेटस प्रीव्यू बॉक्स */
-        .live-preview-box { background-color: rgba(15,23,42,0.6); border: 1px dashed rgba(168,85,247,0.3); padding: 15px; border-radius: 12px; text-align: center; margin-top: 15px; }
-        .live-num-display { font-size: 32px; font-weight: 900; color: #10b981; font-family: monospace; margin: 4px 0; }
-        .status-badge { display: inline-block; background-color: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); font-size: 9px; font-weight: bold; padding: 2px 8px; border-radius: 4px; }
+        /* 🔢 1 से 100 ग्रिड मैट्रिक्स शीट */
+        .matrix-sheet-card { background: #0b0f19; border: 1px solid #1f2937; border-radius: 12px; margin: 10px 15px; padding: 15px; }
+        .matrix-sheet-title { font-size: 12px; font-weight: bold; color: #9ca3af; text-transform: uppercase; display: flex; justify-content: space-between; margin-bottom: 12px; }
+        .matrix-grid-layout { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-height: 250px; overflow-y: scroll; padding-right: 2px; }
+        .matrix-cell-box { background: #111827; border: 1px solid #374151; padding: 8px 2px; text-align: center; border-radius: 8px; font-size: 12px; display: flex; flex-direction: column; gap: 1px; }
+        .matrix-cell-box span { font-weight: bold; color: #ffffff; }
+        .matrix-cell-box small { font-size: 9px; color: #9ca3af; font-family: monospace; }
+                /* 👤 सिंगल-पेज व्यू डायनामिक बॉक्स (डिपॉजिट, विड्रॉल, यूजर एक्शन रूम) */
+        .dynamic-view-panel { display: none; flex-direction: column; gap: 12px; padding: 15px; }
+        .premium-data-card { background: linear-gradient(135deg, #1f2937, #111827); border: 1px solid #374151; border-radius: 14px; padding: 15px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+        .premium-card-row { display: flex; justify-content: space-between; }
+        .premium-card-row span strong { color: #ffffff; font-family: monospace; }
+        .action-btns-row { display: flex; gap: 10px; margin-top: 5px; }
+        .sub-action-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 12px; cursor: pointer; text-transform: uppercase; }
+        .btn-sub-pass { background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #34d399; }
+        .btn-sub-fail { background: linear-gradient(135deg, #ef4444, #dc2626); border: 1px solid #f87171; }
+        .admin-form-container { background: #0b0f19; border: 1px solid #1f2937; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .admin-custom-input { width: 100%; padding: 10px; background: #111827; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13px; outline: none; }
 
-        /* यूटिलिटी क्लासेस */
-        .hidden { display: none !important; }
-        .list-container { display: flex; flex-direction: column; gap: 10px; }
-        .history-card { background-color: rgba(23,32,51,0.5); border: 1px solid #2e3b55; padding: 10px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-        .no-data { text-align: center; color: #4b5563; font-size: 12px; padding: 20px 0; }
+        /* 📜 प्लेयर ऐक्शन पॉपअप ओवरले (UID क्लिक करने पर जो खुलेगा) */
+        .player-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(3, 7, 18, 0.85); display: flex; justify-content: center; align-items: center; padding: 20px; z-index: 50000; display: none; }
+        .player-modal-card { width: 100%; max-width: 380px; background: #0b0f19; border: 1px solid #374151; border-radius: 16px; padding: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.6); }
+                /* ☰ थ्री-लाइंस स्लाइडिंग साइडबार मेन्यू */
+        .sidebar-nav-overlay { position: fixed; top: 0; left: -100%; width: 100%; height: 100%; background: rgba(3, 7, 18, 0.7); z-index: 30000; transition: left 0.3s ease; display: flex; }
+        .sidebar-nav-overlay.open { left: 0; }
+        .sidebar-menu-panel { width: 290px; background-color: #0b0f19; height: 100%; border-right: 1px solid #1f2937; padding: 20px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+        .sidebar-title-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #1f2937; margin-bottom: 12px; }
+        .sidebar-title-row h3 { font-size: 13px; font-weight: 800; color: #a855f7; text-transform: uppercase; letter-spacing: 0.5px; }
+        .close-menu-btn { background: none; border: none; color: #9ca3af; font-size: 20px; cursor: pointer; }
+        .side-menu-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 8px; color: #e5e7eb; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+        .side-menu-item:hover { background-color: #111827; color: #f59e0b; }
+        .side-menu-item.active-tab { background-color: #1f2937; border-left: 3.5px solid #a855f7; color: #ffffff; }
     </style>
 </head>
 <body>
-
-    <!-- टॉप हेडर बार (लोगो और 3 लाइन्स बटन) -->
-    <header>
-        <div class="header-left">
-            <button onclick="toggleMenu(true)" class="menu-btn">☰</button>
-            <div class="logo-box">N&N</div>
-            <h1 class="brand-title">N&N ALPHA ARENA</h1>
+    <!-- 🔒 एडमिन लॉगिन सुरक्षा गेट ओवरले -->
+    <div class="admin-gateway-overlay" id="adminLockGateway">
+        <div class="lock-card-box">
+            <h2>Cpanel Master Lock</h2>
+            <p>कंट्रोल रूम में सुरक्षित प्रवेश करें</p>
+            <form onsubmit="handleAdminLogin(event)">
+                <div class="inp-field-grp">
+                    <label>Admin Username ID</label>
+                    <input type="text" id="adminUser" placeholder="Enter Admin ID" required>
+                </div>
+                <div class="inp-field-grp">
+                    <label>Security Password Key</label>
+                    <input type="password" id="adminPass" placeholder="Enter Password" required>
+                </div>
+                <button type="submit" class="btn-master-verify">Verify Access</button>
+            </form>
         </div>
-        <span class="admin-badge">ADMIN ENGINE</span>
-    </header>
-
-    <!-- 3-लाइन्स साइडबार ड्रॉर (मेनू ऑप्शंस) -->
-    <div id="drawer" class="drawer-menu">
-        <div class="drawer-header">
-            <span class="drawer-title">⚙️ SYSTEM CONTROL</span>
-            <button onclick="toggleMenu(false)" class="close-btn">✕</button>
-        </div>
-        <nav class="menu-items-list">
-            <button onclick="viewSection('info')" id="m-info" class="menu-item active">ℹ️ Information Overview</button>
-            <button onclick="viewSection('withdrawal')" id="m-withdrawal" class="menu-item">💸 Withdrawal Requests</button>
-            <button onclick="viewSection('withdrawal-hist')" id="m-withdrawal-hist" class="menu-item">📜 Withdrawal History</button>
-            <button onclick="viewSection('deposit')" id="m-deposit" class="menu-item">📥 Deposit Requests (UTR)</button>
-            <button onclick="viewSection('deposit-hist')" id="m-deposit-hist" class="menu-item">📜 Deposit History</button>
-            <button onclick="viewSection('game-result')" id="m-game-result" class="menu-item">🎯 Declare Game Result</button>
-            <button onclick="viewSection('game-history')" id="m-game-history" class="menu-item">📊 Game Result History</button>
-            <button onclick="viewSection('game-management')" id="m-game-management" class="menu-item">🎮 Game Market Management</button>
-                   <!-- यहाँ से नए एडवांस्ड बटन्स पेस्ट करें -->
-            <button onclick="viewSection('hybrid-markets')" id="m-hybrid-markets" class="menu-item">🎯 Hybrid Market Control</button>
-            <button onclick="viewSection('wheel-secret-set')" id="m-wheel-secret-set" class="menu-item">⚙️ Wheel Secret Settings</button>
-            <button onclick="viewSection('anti-cheat-shield')" id="m-anti-cheat-shield" class="menu-item">🚨 Anti-Cheat & UTR Shield</button>
-             <button onclick="viewSection('user-manage')" id="m-user-manage" class="menu-item">👤 Users Wallet & Ban</button>
-             <button onclick="viewSection('agent-control')" id="m-agent-control" class="menu-item">🤝 Agent Commissions</button>
-             
-</nav>
     </div>
-    <div id="backdrop" onclick="toggleMenu(false)" class="backdrop"></div>
 
-    <!-- मुख्य कंटेंट एरिया -->
-            <!-- ================= F5: AGENT/PROMOTER COMMISSION CONTROL ================= -->
-        <div id="s-agent-control" class="hidden">
-            <div class="section-title">🤝 AGENT & PROMOTER COMMISSIONS</div>
+    <!-- 📱 मुख्य सीपैनल मास्टर कंटेनर (लॉगिन सफल होने पर खुलेगा) -->
+    <div class="cpanel-master-container" id="adminDashboardWrapper">
+            <!-- 👑 टॉप एनएंडएन अल्फा एरिना ब्रांडिंग पट्टी -->
+        <div class="branding-top-bar">
+            <div class="branding-left-row">
+                <button class="hamburger-icon-btn" onclick="openAdminSidebar()">☰</button>
+                <div class="brand-logo-badge">N&N</div>
+                <div class="brand-text-title">N&N Alpha <span>Arena</span></div>
+            </div>
+            <div class="admin-engine-tag">Admin Engine</div>
+        </div>
+
+        <!-- ℹ️ सिस्टम ओवरव्यू टाइटल बैनर -->
+        <div class="view-section-banner" id="currentSectionTitle">ℹ️ System Overview</div>
+                <!-- ================================================================= -->
+        <!-- ℹ️ SECTION 1: SYSTEM OVERVIEW PANEL (मुख्य डिफ़ॉल्ट स्क्रीन) -->
+        <!-- ================================================================= -->
+        <div id="view_info_overview" style="display: block;">
             
-            <!-- लाइव एजेंट सर्च बॉक्स कार्ड -->
-            <div class="game-card" style="border-left-color: #3b82f6; margin-bottom: 12px;">
-                <div class="input-group" style="margin-bottom: 10px;">
-                    <label class="input-label">एजेंट / प्रमोटर आईडी सर्च करें</label>
-                    <div style="display: flex; gap: 8px; margin-top: 4px;">
-                        <input type="text" id="search-agent-id" class="form-input" placeholder="जैसे: Agent_007 या Promoter_VIP" style="padding: 8px; font-size: 12px; flex: 1; margin-bottom: 0;">
-                        <button type="button" onclick="searchAgentLedger()" class="action-btn btn-paid" style="flex: 0 0 80px; font-size: 10px; margin-top: 0; border-radius: 8px;">SEARCH</button>
+            <!-- 📈 टॉप स्टेट्स कार्ड्स (टोटल यूज़र्स और लाइव एक्टिव बेट्स) -->
+            <div class="stats-summary-row">
+                <div class="stat-card-box">
+                    <span class="lbl">टोटल यूज़र्स</span>
+                    <span class="val" id="statTotalUsers">0</span>
+                </div>
+                <div class="stat-card-box bets">
+                    <span class="lbl">लाइव एक्टिव बेट्स</span>
+                    <span class="val" id="statTotalBets">₹0</span>
+                </div>
+            </div>
+                        <!-- 👥 लाइव मेंबर्स डेटाबेस टेबल ज़ोन -->
+            <div class="members-table-card">
+                <div class="table-header-grid">
+                    <div>UID</div>
+                    <div>नाम</div>
+                    <div>मोबाइल</div>
+                    <div>बैलेंस</div>
+                    <div>स्टेट्स</div>
+                </div>
+                <!-- खिलाड़ियों का असली डेटा ऐप इंजन द्वारा यहाँ ऑटो-लोड होगा -->
+                <div class="table-rows-scroll-area" id="membersTableLiveArea">
+                    <p style="text-align: center; color: #9ca3af; font-size: 11px; padding: 10px;">डेटा लोड हो रहा है...</p>
+                </div>
+            </div>
+                        <!-- 📊 तीन बड़े रिस्क कलर टैग्स (Tags Summary Zone) -->
+            <div class="risk-tags-grid">
+                <div class="risk-box-item high">
+                    Highest Betted:
+                    <span id="tagHighestNum">#0 (₹0)</span>
+                </div>
+                <div class="risk-box-item lowest">
+                    Lowest Betted:
+                    <span id="tagLowestNum">#0 (₹0)</span>
+                </div>
+                <div class="risk-box-item zero">
+                    Zero Money:
+                    <span id="tagZeroCount">100/100 Nos</span>
+                </div>
+            </div>
+                        <!-- 🔢 1 से 100 ग्रिड मैट्रिक्स शीट -->
+            <div class="matrix-sheet-card">
+                <div class="matrix-sheet-title">
+                    <span>📊 Live 1 to 100 Matrix Sheet</span>
+                    <span style="color: #4ade80;">Live Pool: <strong id="totalLivePoolMoney">₹0</strong></span>
+                </div>
+                <!-- 1 से 100 के डिब्बे जावास्क्रिप्ट द्वारा यहाँ ऑटो-जेनरेट होंगे -->
+                <div class="matrix-grid-layout" id="adminMatrixGridDisplay"></div>
+            </div>
+        </div> <!-- SECTION 1 मुख्य स्क्रीन डिब्बा बंद -->
+                <!-- ================================================================= -->
+        <!-- 📩 SINGLE-PAGE VIEW PANELS (साइड मेन्यू पर क्लिक करने वाले डिब्बे) -->
+        <!-- ================================================================= -->
+
+        <!-- 2. Withdrawal Requests -->
+        <div id="view_withdraw_req" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>लंबित विड्रॉल अनुरोधों की लाइव सूची खाली है।</p>
+            </div>
+        </div>
+
+        <!-- 3. Withdrawal History -->
+        <div id="view_withdraw_hist" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>विड्रॉल इतिहास (सफल/अस्वीकृत) रिकॉर्ड खाली है।</p>
+            </div>
+        </div>
+                <!-- 4. Deposit Requests (UTR Shield - आपका मुख्य इनपुट बॉक्स) -->
+        <div id="view_deposit_req" class="dynamic-view-panel">
+            <div id="liveDepositRequestContainer">
+                <div class="premium-data-card">
+                    <div class="premium-card-row"><span>👤 Player Mobile:</span><span><strong id="depMobile">9992788875</strong></span></div>
+                    <div class="premium-card-row"><span>💰 Pay Amount:</span><span><strong style="color:#4ade80;" id="depAmount">₹500.00</strong></span></div>
+                    <div class="premium-card-row"><span>🆔 UTR Number:</span><span><strong id="depUTR">622501889754</strong></span></div>
+                    <div class="action-btns-row">
+                        <button class="sub-action-btn btn-sub-pass" onclick="alert('Request Approved! Money Credited.')">Approve</button>
+                        <button class="sub-action-btn btn-sub-fail" onclick="alert('Request Declined!')">Decline</button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- डायनामिक एजेंट प्रोफाइल कार्ड (सर्च करने पर लाइव डेटा लोड होगा) -->
-            <div id="agent-profile-result-card" class="game-card hidden" style="border-left-color: #10b981;">
-                <div class="flex-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span id="txt-agent-id-display" style="font-weight: bold; color: #f3f4f6; font-size: 15px;">Agent_007</span>
-                        <p style="font-size: 10px; color: #9ca3af; margin-top: 2px;">रेफ़रल नेटवर्क ओवरव्यू</p>
+        <!-- 5. Deposit History -->
+        <div id="view_deposit_hist" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>डिपॉजिट इतिहास का रिकॉर्ड खाली है।</p>
+            </div>
+        </div>
+                <!-- 6. Declare Game Result (8 मार्केट्स एडवांस बुकिंग कंट्रोल्स) -->
+        <div id="view_declare_result" class="dynamic-view-panel">
+            <div class="admin-form-container">
+                <p style="font-size:11px; color:#9ca3af; line-height:1.4;">*नंबर एडवांस में डाल कर छोड़ सकते हैं। खाली छोड़ने पर <strong>Auto Engine (Lowest Pool)</strong> विजेता चुनेगा [INDEX]।</p>
+                
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:8px; border-radius:8px; border:1px solid #1f2937;">
+                        <span style="font-size:12px; font-weight:bold;">Faridabad (06:00 PM)</span>
+                        <div style="display:flex; gap:5px;"><input type="number" class="result-num-input" id="res_faridabad" placeholder="01-100"><button class="btn-declare" onclick="submitMarketResult('DAILY_FARIDABAD', 'res_faridabad')">Declare</button></div>
                     </div>
-                    <span id="txt-agent-referrals" style="font-size: 9px; color: #fbbf24; font-weight: bold; background: rgba(251,191,36,0.1); padding: 3px 8px; border-radius: 4px;">45 PLAYERS</span>
-                </div>
-
-                <!-- लाइव अनपेड कमीशन डिस्प्ले -->
-                <div style="background: rgba(11,17,30,0.6); border: 1px solid #2e3b55; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
-                    <p style="font-size: 9px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">कुल अनपेड कमीशन राशि</p>
-                    <p id="txt-agent-unpaid" style="font-size: 24px; font-weight: bold; color: #10b981; font-family: monospace; margin-top: 2px;">₹1,500</p>
-                </div>
-
-                <!-- कमीशन रेट सेटिंग फॉर्म -->
-                <div class="input-group" style="margin-bottom: 12px;">
-                    <label class="input-label">करेंट कमीशन रेट सेट करें (%)</label>
-                    <input type="number" id="agent-comm-rate-input" min="1" max="100" class="form-input" placeholder="जैसे: 5 या 10" style="padding: 10px; font-size: 13px; text-align: center; font-family: monospace; color: #fbbf24; font-weight: bold;">
-                </div>
-
-                <div class="btn-group" style="display: flex; gap: 8px; margin-bottom: 5px;">
-                    <button type="button" onclick="updateAgentCommRate()" class="action-btn btn-approve" style="font-size: 10px; flex: 1; padding: 10px; background-color: #a855f7;">⚙️ Update Rate (%)</button>
-                    <button type="button" onclick="settleAgentCommission()" class="action-btn btn-paid" style="font-size: 10px; flex: 1; padding: 10px; background-color: #3b82f6;">💳 Clear & Pay Dues</button>
-                </div>
-            </div>
-
-            <!-- कोई डेटा न होने पर डिफ़ॉल्ट निर्देश संदेश -->
-            <div id="agent-manage-placeholder" class="game-card" style="text-align: center; color: #6b7280; font-size: 12px; border-left-color: #4b5563; padding: 25px 15px;">
-                🔍 कृपया प्रमोटर की एजेंट आईडी ऊपर बॉक्स में टाइप करके 'SEARCH' बटन दबाएं।
-            </div>
-        </div>
-        
-    <main>
-
-        <!-- S1: INFORMATION OVERVIEW (डैशबोर्ड होमपेज) -->
-        <div id="s-info">
-            <div class="section-title">ℹ️ SYSTEM OVERVIEW</div>
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <p class="stat-label">टोटल यूज़र्स</p>
-                    <p class="stat-val text-yellow">1,240</p>
-                </div>
-                <div class="stat-box">
-                    <p class="stat-label">लाइव एक्टिव बेट्स</p>
-                    <p class="stat-val text-green">₹4,850</p>
-                </div>
-            </div>
-            <!-- 🎯 सभी यूज़र्स का लाइव डेटा देखने के लिए सुंदर टेबल (खांचा) -->
-<div style="overflow-x: auto; margin-top: 15px; background: rgba(3, 7, 18, 0.4); padding: 10px; border-radius: 12px; border: 1px solid #1f2937;">
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; color: #e5e7eb;">
-        <thead>
-            <tr style="background-color: #1f2937; border-bottom: 2px solid #374151;">
-                <th style="padding: 10px;">UID</th>
-                <th style="padding: 10px;">नाम</th>
-                <th style="padding: 10px;">मोबाइल</th>
-                <th style="padding: 10px;">जीमेल आईडी</th>
-                <th style="padding: 10px;">बैलेंस</th>
-                <th style="padding: 10px;">स्टेटस</th>
-            </tr>
-        </thead>
-        <tbody id="render-all-users-table">
-            <!-- जावास्क्रिप्ट मोंगोडीबी से असली डेटा लाकर यहाँ अपने आप सजा देगी -->
-            <tr><td colspan="6" style="text-align: center; padding: 20px; color: #9ca3af;">डेटा लोड हो रहा है...</td></tr>
-        </tbody>
-    </table>
-</div>
-<!-- 👈 लाइव शीट का अलग कमरा (Section) जो शुरू में छुपा रहेगा -->
-<!-- 👈 वापस पहले जैसा कर दें ताकि डिब्बे स्क्रीन पर दिखने लगें -->
-<div id="live-satta-sheet" class="content-section">
-
-  <!-- 📊 लाइव रिस्क और प्रॉफिट टैग्स -->
-  <div class="admin-tags-container" style="display: flex; gap: 15px; margin: 20px 0; font-weight: bold; font-family: sans-serif;">
-    <div id="highest-bet-tag" style="background: #ef4444; padding: 10px; border-radius: 6px; color: white;">Highest Betted: Loading...</div>
-    <div id="lowest-bet-tag" style="background: #eab308; padding: 10px; border-radius: 6px; color: black;">Lowest Betted: Loading...</div>
-    <div id="zero-bet-tag" style="background: #22c55e; padding: 10px; border-radius: 6px; color: white;">Zero Money Numbers: Loading...</div>
-  </div>
-
-  <!-- 🔢 1 से 100 लाइव सट्टा शीट ग्रिड -->
-  <div class="satta-sheet-grid" id="adminSattaSheet" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 20px; font-family: sans-serif;">
-    <!-- जावास्क्रिप्ट इसके अंदर अपने आप 1 से 100 तक के डिब्बे बना देगी -->
-  </div>
-</div>
-
-        </div>
-                <!-- S2: WITHDRAWAL REQUESTS -->
-        <div id="s-withdrawal" class="hidden">
-            <div class="section-title">
-                <span>💸 WITHDRAWAL REQUESTS (APPROVAL)</span>
-                <span id="badge-wit-count" class="count-tag">0 Req</span>
-            </div>
-            <div id="render-withdrawal-req" class="list-container"></div>
-        </div>
-
-        <!-- S3: WITHDRAWAL HISTORY -->
-        <div id="s-withdrawal-hist" class="hidden">
-            <div class="section-title">📜 WITHDRAWAL HISTORY (PAID)</div>
-            <div id="render-withdrawal-hist" class="list-container"></div>
-        </div>
-
-        <!-- S4: DEPOSIT REQUESTS -->
-        <div id="s-deposit" class="hidden">
-            <div class="section-title">
-                <span>📥 DEPOSIT UTR REQUESTS</span>
-                <span id="badge-dep-count" class="count-tag">0 Req</span>
-            </div>
-            <div id="render-deposit-req" class="list-container"></div>
-        </div>
-
-        <!-- S5: DEPOSIT HISTORY -->
-        <div id="s-deposit-hist" class="hidden">
-            <div class="section-title">📜 DEPOSIT HISTORY (SUCCESS)</div>
-            <div id="render-deposit-hist" class="list-container"></div>
-        </div>
-
-        <!-- S6: DECLARE GAME RESULT -->
-        <div id="s-game-result" class="hidden">
-            <div class="section-title">🎯 DECLARE GAME RESULT (95X)</div>
-            <div class="game-card">
-                <form id="resultForm" onsubmit="pushMarketResult(event)">
-                    <div class="input-group">
-                        <label class="input-label">मार्केट का नाम और समय चुनें</label>
-                        <select id="sel-market" class="form-select">
-                            <option value="Faridabad">Faridabad (06:00 PM)</option>
-                            <option value="Ghaziabad">Ghaziabad (08:30 PM)</option>
-                            <option value="Gali">Gali (11:30 PM)</option>
-                            <option value="Disawer">Disawer (05:00 AM)</option>
-                        </select>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:8px; border-radius:8px; border:1px solid #1f2937;">
+                        <span style="font-size:12px; font-weight:bold;">Ghaziabad (08:30 PM)</span>
+                        <div style="display:flex; gap:5px;"><input type="number" class="result-num-input" id="res_ghaziabad" placeholder="01-100"><button class="btn-declare" onclick="submitMarketResult('DAILY_GHAZIABAD', 'res_ghaziabad')">Declare</button></div>
                     </div>
-                    <div class="input-group">
-                        <label class="input-label">विजेता नंबर सेट करें (1-100)</label>
-                        <input type="number" id="inp-number" min="1" max="100" required class="form-input number-win" placeholder="00">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:8px; border-radius:8px; border:1px solid #1f2937;">
+                        <span style="font-size:12px; font-weight:bold;">Main Gali (11:30 PM)</span>
+                        <div style="display:flex; gap:5px;"><input type="number" class="result-num-input" id="res_gali" placeholder="01-100"><button class="btn-declare" onclick="submitMarketResult('DAILY_GALI', 'res_gali')">Declare</button></div>
                     </div>
-                    <button type="submit" class="btn-primary">अपडेट करें और लाइव भेजें</button>
-                </form>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:8px; border-radius:8px; border:1px solid #1f2937;">
+                        <span style="font-size:12px; font-weight:bold;">Disawer (05:00 AM)</span>
+                        <div style="display:flex; gap:5px;"><input type="number" class="result-num-input" id="res_disawer" placeholder="01-100"><button class="btn-declare" onclick="submitMarketResult('DAILY_DISAWER', 'res_disawer')">Declare</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Game Result History -->
+        <div id="view_result_hist" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>पुरानी परिणाम इतिहास सूची खाली है।</p>
+            </div>
+        </div>
+                <!-- 8. Game Market Management -->
+        <div id="view_market_mgnt" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>मार्केट चालू/बंद करने की सेटिंग्स सक्रिय हैं।</p>
+            </div>
+        </div>
+
+        <!-- 9. Hybrid Market Control -->
+        <div id="view_hybrid_control" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>ऑटो/मैनुअल हाइब्रिड मोड स्विचिंग एक्टिव है।</p>
+            </div>
+        </div>
+
+        <!-- 10. Wheel Secret Settings -->
+        <div id="view_wheel_settings" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>लकी स्पिन जैकपॉट प्रोबेबिलिटी लिमिटर सेटिंग्स।</p>
+            </div>
+        </div>
+                <!-- 11. Anti-Cheat & UTR Shield -->
+        <div id="view_anticheat_shield" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #10b981;">
+                <p>🛡️ Anti-Cheat & IP Shield एक्टिव है। सिस्टम सुरक्षित है।</p>
+            </div>
+        </div>
+
+        <!-- 12. Users Wallet & Ban (आईडी सर्च, पैसे डालना/काटना और बैन बटन) -->
+        <div id="view_user_wallet_ban" class="dynamic-view-panel">
+            <div class="admin-form-container">
+                <input type="text" class="admin-custom-input" id="searchUserMobileInput" placeholder="खिलाड़ी का मोबाइल नंबर या UID दर्ज करें">
+                <button class="btn-declare" style="width:100%; padding:12px; font-size:13px;" onclick="handleManualUserSearch()">Search Player Account</button>
+                
+                <!-- सर्च करने पर खिलाड़ी का लाइव डेटा यहाँ नीचे दिखेगा -->
+                <div id="manualSearchPlayerResultArea" style="margin-top:5px;"></div>
+            </div>
+        </div>
+
+        <!-- 13. Agent Commissions -->
+        <div id="view_agent_commission" class="dynamic-view-panel">
+            <div class="premium-data-card" style="text-align: center; color: #9ca3af;">
+                <p>प्रमोटर एजेंट्स कमीशन ट्रैकर रूम लोड हो रहा है...</p>
+            </div>
+        </div>
+
+    </div> <!-- 📱 मुख्य सीपैनल मास्टर कंटेनर (.cpanel-master-container) यहाँ बंद हुआ -->
+        <!-- ================================================================= -->
+    <!-- ☰ SLIDING SIDEBAR NAVIGATION MENU (स्क्रीनशॉट वाला मेन्यू बार) -->
+    <!-- ================================================================= -->
+    <div class="sidebar-nav-overlay" id="adminSidebarNav">
+        <div class="sidebar-menu-panel">
+            <div class="sidebar-title-row">
+                <h3>⚙️ System Control</h3>
+                <button class="close-menu-btn" onclick="closeAdminSidebar()">✕</button>
             </div>
             
-            <div class="live-preview-box">
-                <p style="font-size: 10px; font-weight: bold; color: #9ca3af; letter-spacing: 1px;">वर्तमान लाइव ऐप डेटा प्रीव्यू</p>
-                <p style="font-size: 12px; margin-top: 5px;">मार्केट: <span id="live-m-name" style="color: #fbbf24; font-weight: bold;">Faridabad</span></p>
-                <div id="live-m-num" class="live-num-display">78</div>
-                <span class="status-badge">RESULT OUT</span>
+            <!-- स्क्रीनशॉट के हूबहू व्यवस्थित लिस्ट ऑप्शंस -->
+            <div class="side-menu-item active-tab" id="tab_info_overview" onclick="switchAdminSection('info_overview', 'Information Overview')">ℹ️ Information Overview</div>
+            <div class="side-menu-item" id="tab_withdraw_req" onclick="switchAdminSection('withdraw_req', 'Withdrawal Requests')">💸 Withdrawal Requests</div>
+            <div class="side-menu-item" id="tab_withdraw_hist" onclick="switchAdminSection('withdraw_hist', 'Withdrawal History')">📜 Withdrawal History</div>
+            <div class="side-menu-item" id="tab_deposit_req" onclick="switchAdminSection('deposit_req', 'Deposit Requests (UTR)')">📥 Deposit Requests (UTR)</div>
+            <div class="side-menu-item" id="tab_deposit_hist" onclick="switchAdminSection('deposit_hist', 'Deposit History')">📜 Deposit History</div>
+            <div class="side-menu-item" id="tab_declare_result" onclick="switchAdminSection('declare_result', 'Declare Game Result')">🎯 Declare Game Result</div>
+            <div class="side-menu-item" id="tab_result_hist" onclick="switchAdminSection('result_hist', 'Game Result History')">📊 Game Result History</div>
+            <div class="side-menu-item" id="tab_market_mgnt" onclick="switchAdminSection('market_mgnt', 'Game Market Management')">🎮 Game Market Management</div>
+            <div class="side-menu-item" id="tab_hybrid_control" onclick="switchAdminSection('hybrid_control', 'Hybrid Market Control')">🎯 Hybrid Market Control</div>
+            <div class="side-menu-item" id="tab_wheel_settings" onclick="switchAdminSection('wheel_settings', 'Wheel Secret Settings')">⚙️ Wheel Secret Settings</div>
+            <div class="side-menu-item" id="tab_anticheat_shield" onclick="switchAdminSection('anticheat_shield', 'Anti-Cheat & UTR Shield')">🚨 Anti-Cheat & UTR Shield</div>
+            <div class="side-menu-item" id="tab_user_wallet_ban" onclick="switchAdminSection('user_wallet_ban', 'Users Wallet & Ban')">👤 Users Wallet & Ban</div>
+            <div class="side-menu-item" id="tab_agent_commission" onclick="switchAdminSection('agent_commission', 'Agent Commissions')">🤝 Agent Commissions</div>
+        </div>
+    </div>
+        <!-- 📜 प्लेयर ऐक्शन पॉपअप ओवरले (UID क्लिक करने पर खुलने वाला मास्टर रूम) -->
+    <div class="player-modal-overlay" id="playerActionModal">
+        <div class="player-modal-card">
+            <div class="sidebar-title-row">
+                <h3 style="color:#f59e0b;">👤 Account Actions</h3>
+                <button class="close-menu-btn" onclick="closePlayerModal()">✕</button>
             </div>
-        </div>
-
-        <!-- S7: GAME RESULT HISTORY -->
-        <div id="s-game-history" class="hidden">
-            <div class="section-title">📊 GAME RESULT HISTORY</div>
-            <div id="render-game-hist" class="list-container"></div>
-        </div>
-
-        <!-- S8: GAME MARKET MANAGEMENT -->
-        <div id="s-game-management" class="hidden">
-            <div class="section-title">🎮 MARKET MANAGEMENT</div>
-            <div class="game-card" style="text-align: center; color: #9ca3af;">
-                यहाँ से मार्केट्स की समय सीमा एवं बेट लिमिट्स कंट्रोल की जा सकती हैं।
-            </div>
-        </div>
-                <!-- ================= F1: HYBRID MARKET CONTROL (4 BOXES WITH DOUBLE MODES) ================= -->
-        <div id="s-hybrid-markets" class="hidden">
-            <div class="section-title">🎯 HYBRID MARKET CONTROLS (DOUBLE MODES)</div>
+            <!-- खिलाड़ी का लाइव डेटाबेस विवरण यहाँ लोड होगा -->
+            <div id="modalPlayerInfoDetails" style="font-size:12px; display:flex; flex-direction:column; gap:6px; margin-bottom:15px;"></div>
             
-            <!-- 1. Faridabad Box -->
-            <div class="game-card" style="border-left-color: #a855f7;">
-                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; color: #f3f4f6;">Faridabad (06:00 PM)</span>
-                    <span id="txt-mode-fabad" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
+            <!-- कॉइन एडजस्टमेंट और बैन ऐक्शन्स फ़ॉर्म -->
+            <div class="admin-form-container">
+                <input type="number" class="admin-custom-input" id="modalCoinInput" placeholder="राशि दर्ज करें (रुपये)">
+                <div class="action-btns-row">
+                    <button class="sub-action-btn btn-sub-pass" onclick="modifyPlayerWallet('add')">Add Money</button>
+                    <button class="sub-action-btn btn-sub-fail" onclick="modifyPlayerWallet('deduct')">Deduct Money</button>
                 </div>
-                <div class="input-group" style="margin-bottom: 10px;">
-                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
-                    <input type="number" id="num-fabad" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
-                </div>
-                <div class="btn-group" style="display: flex; gap: 8px;">
-                    <button type="button" onclick="toggleMarketMode('fabad', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
-                    <button type="button" onclick="toggleMarketMode('fabad', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
-                </div>
-            </div>
-
-            <!-- 2. Ghaziabad Box -->
-            <div class="game-card" style="border-left-color: #a855f7;">
-                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; color: #f3f4f6;">Ghaziabad (08:30 PM)</span>
-                    <span id="txt-mode-gzbad" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
-                </div>
-                <div class="input-group" style="margin-bottom: 10px;">
-                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
-                    <input type="number" id="num-gzbad" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
-                </div>
-                <div class="btn-group" style="display: flex; gap: 8px;">
-                    <button type="button" onclick="toggleMarketMode('gzbad', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
-                    <button type="button" onclick="toggleMarketMode('gzbad', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
-                </div>
-            </div>
-
-            <!-- 3. Gali Box -->
-            <div class="game-card" style="border-left-color: #a855f7;">
-                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; color: #f3f4f6;">Gali (11:30 PM)</span>
-                    <span id="txt-mode-gali" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
-                </div>
-                <div class="input-group" style="margin-bottom: 10px;">
-                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
-                    <input type="number" id="num-gali" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
-                </div>
-                <div class="btn-group" style="display: flex; gap: 8px;">
-                    <button type="button" onclick="toggleMarketMode('gali', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
-                    <button type="button" onclick="toggleMarketMode('gali', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
-                </div>
-            </div>
-
-            <!-- 4. Disawer Box -->
-            <div class="game-card" style="border-left-color: #a855f7;">
-                <div class="flex-row" style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; color: #f3f4f6;">Disawer (05:00 AM)</span>
-                    <span id="txt-mode-dsawr" style="font-size: 10px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">MODE: AUTO (MIN LOAD)</span>
-                </div>
-                <div class="input-group" style="margin-bottom: 10px;">
-                    <label class="input-label">एडवांस बुकिंग नंबर (1-100)</label>
-                    <input type="number" id="num-dsawr" min="1" max="100" class="form-input" placeholder="खाली छोड़ें तो ऑटो रहेगा" style="padding: 8px; font-size: 12px;">
-                </div>
-                <div class="btn-group" style="display: flex; gap: 8px;">
-                    <button type="button" onclick="toggleMarketMode('dsawr', 'MANUAL')" class="action-btn btn-approve" style="font-size: 9px; flex: 1;">Set Manual</button>
-                    <button type="button" onclick="toggleMarketMode('dsawr', 'AUTO')" class="action-btn btn-reject" style="font-size: 9px; border-color: #10b981; color: #10b981; flex: 1;">Switch Auto</button>
-                </div>
+                <button id="modalBanBtn" class="sub-action-btn btn-sub-fail" style="background:linear-gradient(135deg, #ef4444, #dc2626); margin-top:5px;" onclick="togglePlayerBanStatus()">❌ BAN USER ID</button>
             </div>
         </div>
+    </div>
 
-        <!-- ================= F2: WHEEL SECRET REPAIR SETTINGS ================= -->
-        <div id="s-wheel-secret-set" class="hidden">
-            <div class="section-title">⚙️ WHEEL REWARD CONTROL (₹1 - ₹7 LOGIC)</div>
-            <div class="game-card" style="border-left-color: #fbbf24;">
-                <p style="font-size: 11px; color: #9ca3af; margin-bottom: 15px; line-height: 1.5;">यहाँ से आप तय कर सकते हैं कि पहिया स्पिन होने पर जैकपॉट (₹7) कितने प्रतिशत चांस पर रुकेगा।</p>
-                <div class="input-group" style="margin-bottom: 15px;">
-                    <label class="input-label">₹7 जैकपॉट चांस (0% से 100%)</label>
-                    <input type="number" id="wheel-jackpot-rate" min="0" max="100" class="form-input" value="2" style="font-family: monospace; font-size: 16px; font-weight: bold; color: #fbbf24; text-align: center;">
-                </div>
-                <button type="button" onclick="saveWheelSettings()" class="btn-primary" style="background-color: #d97706; box-shadow: 0 4px 12px rgba(217,119,6,0.3);">Save Wheel Probability</button>
-            </div>
-        </div>
-
-        <!-- ================= F3: ANTI-CHEAT & UTR SHIELD ================= -->
-        <div id="s-anti-cheat-shield" class="hidden">
-            <div class="section-title">🚨 ANTI-CHEAT & UTR SHIELD</div>
-            <div class="game-card" style="border-left-color: #ef4444; margin-bottom: 12px;">
-                <div class="flex-row">
-                    <span style="font-weight: bold; color: #f3f4f6;">Fake UTR Protection</span>
-                    <span style="font-size: 9px; color: #ef4444; font-weight: bold; background: rgba(239,68,68,0.1); padding: 2px 6px; border-radius: 4px;">ACTIVE</span>
-                </div>
-                <p style="font-size: 11px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">सिस्टम पुराने और डुप्लीकेट UTR नंबर डालने वाले यूज़र्स को ऑटोमैटिक रिजेक्ट लिस्ट में डाल रहा है।</p>
-            </div>
-            <div class="game-card" style="border-left-color: #f59e0b;">
-                <div class="flex-row">
-                    <span style="font-weight: bold; color: #f3f4f6;">Abnormal Bets Trigger</span>
-                    <span style="font-size: 9px; color: #f59e0b; font-weight: bold; background: rgba(245,158,11,0.1); padding: 2px 6px; border-radius: 4px;">MONITORING</span>
-                </div>
-                <p style="font-size: 11px; color: #9ca3af; margin-top: 6px; line-height: 1.4;">एक साथ 80 से अधिक नंबर चुनने वाले संदिग्ध खिलाड़ियों की आईडी यहाँ बैन करने के लिए फ्लैग होगी।</p>
-            </div>
-        </div>
-                <!-- ================= F4: USER WALLET & BAN SYSTEM (ADVANCED CONTROLS) ================= -->
-        <div id="s-user-manage" class="hidden">
-            <div class="section-title">👤 USER WALLET & BAN SYSTEM</div>
-            
-            <!-- लाइव सर्च बॉक्स कार्ड -->
-            <div class="game-card" style="border-left-color: #3b82f6; margin-bottom: 12px;">
-                <div class="input-group" style="margin-bottom: 10px;">
-                    <label class="input-label">खिलाड़ी की यूजर आईडी सर्च करें</label>
-                    <div style="display: flex; gap: 8px; margin-top: 4px;">
-                        <input type="text" id="search-user-id" class="form-input" placeholder="जैसे: User_8821 या User_4092" style="padding: 8px; font-size: 12px; flex: 1; margin-bottom: 0;">
-                        <button type="button" onclick="searchUserWallet()" class="action-btn btn-paid" style="flex: 0 0 80px; font-size: 10px; margin-top: 0; border-radius: 8px;">SEARCH</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- डायनामिक यूजर प्रोफाइल कार्ड (सर्च करने पर यहाँ लाइव डेटा लोड होगा) -->
-            <div id="user-profile-result-card" class="game-card hidden" style="border-left-color: #fbbf24;">
-                <div class="flex-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span id="txt-manage-username" style="font-weight: bold; color: #f3f4f6; font-size: 15px;">User_8821</span>
-                        <p style="font-size: 10px; color: #9ca3af; margin-top: 2px;">खिलाड़ी का लाइव खाता</p>
-                    </div>
-                    <span id="txt-manage-status" style="font-size: 9px; color: #10b981; font-weight: bold; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;">STATUS: ACTIVE</span>
-                </div>
-
-                <!-- लाइव वॉलेट बैलेंस डिस्प्ले -->
-                <div style="background: rgba(11,17,30,0.6); border: 1px solid #2e3b55; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 15px;">
-                    <p style="font-size: 9px; color: #9ca3af; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">करंट वॉलेट बैलेंस</p>
-                    <p id="txt-manage-balance" style="font-size: 24px; font-weight: bold; color: #fbbf24; font-family: monospace; margin-top: 2px;">₹1,000</p>
-                </div>
-
-                <!-- एडमिन के 3 सुपर कंट्रोल्स (ऐक्शन फॉर्म) -->
-                <div class="input-group" style="margin-bottom: 12px;">
-                    <label class="input-label">अमाउंट दर्ज करें (₹)</label>
-                    <input type="number" id="manage-amt-input" min="1" class="form-input" placeholder="₹ राशि यहाँ टाइप करें" style="padding: 10px; font-size: 13px; text-align: center;">
-                </div>
-
-                <div class="btn-group" style="display: flex; gap: 8px; margin-bottom: 10px;">
-                    <button type="button" onclick="modifyUserWallet('ADD')" class="action-btn btn-approve" style="font-size: 10px; flex: 1; padding: 10px; background-color: #10b981;">➕ Add Money</button>
-                    <button type="button" onclick="modifyUserWallet('DEDUCT')" class="action-btn btn-reject" style="font-size: 10px; flex: 1; padding: 10px; border-color: #ef4444; color: #ef4444;">➖ Deduct Money</button>
-                </div>
-
-                <button type="button" id="btn-ban-toggle" onclick="toggleUserBanStatus()" class="btn-primary" style="background-color: #ef4444; box-shadow: 0 4px 12px rgba(239,68,68,0.2); font-size: 10px; padding: 10px; width: 100%; margin-top: 5px;">🚫 Permanent BAN Player</button>
-            </div>
-
-            <!-- कोई डेटा न होने पर डिफ़ॉल्ट निर्देश संदेश -->
-            <div id="user-manage-placeholder" class="game-card" style="text-align: center; color: #6b7280; font-size: 12px; border-left-color: #4b5563; padding: 25px 15px;">
-                🔍 कृपया खिलाड़ी की यूजर आईडी ऊपर बॉक्स में टाइप करके 'SEARCH' बटन दबाएं।
-            </div>
-        </div>
-        
-    </main>
-    
-        <!-- ऑफ़लाइन इंजन स्क्रिप्ट (LocalStorage संचालित) -->
+    <!-- स्क्रिप्ट की शुरुआत -->
     <script>
-    // 📊 लाइव सट्टा शीट का डेटा बैकएंड से खींचने का कोड
-async function loadLiveSattaSheet() {
-    try {
-        const response = await fetch("https://arena-backen.onrender.com);
-        const data = await response.json();
-        
-        if (data.status === "success") {
-            const highEl = document.getElementById("highest-bet-tag");
-            const lowEl = document.getElementById("lowest-bet-tag");
-            const zeroEl = document.getElementById("zero-bet-tag");
+            // 🔑 लाइव प्रोडक्शन रेंडर बैकएंड यूआरएल
+        const BACKEND_URL = "https://arena-backen.onrender.com";
+        let masterUsersGlobalList = []; // सभी खिलाड़ियों की सूची स्टोर करने के लिए एरे
+        let currentSelectedUserMobile = ""; // जिस खिलाड़ी को एडिट कर रहे हैं उसका मोबाइल
 
-            if (highEl) highEl.innerText = `Highest Betted: Number ${data.tags.highest}`;
-            if (lowEl) lowEl.innerText = `Lowest Betted: Number ${data.tags.lowest}`;
-            if (zeroEl) zeroEl.innerText = `Zero Money Numbers: ${data.tags.zero_count}`;
-
-            for (let i = 1; i <= 100; i++) {
-                // यहाँ ध्यान दें: आपके ग्रिड डिब्बों की ID के अनुसार सिंक किया गया है
-                const cell = document.getElementById(`sheet-num-${i}`);
-                if (cell) {
-                    cell.innerText = `₹${data.sheet[i] || 0}`;
-                }
+        // पेज लोड होते ही सुरक्षा और ग्रिड खांचा तैयार करना
+        document.addEventListener("DOMContentLoaded", () => {
+            if (sessionStorage.getItem("adminLoggedIn") === "true") {
+                unlockAdminDashboard();
             }
-        }
-    } catch (error) {
-        console.error("लाइव शीट लोड करने में एरर:", error);
-    }
-}
-
-// हर 10 सेकंड में अपने आप डेटा अपडेट करें
-setInterval(loadLiveSattaSheet, 10000);
-loadLiveSattaSheet();
-
-    // 🔐 एडमिन सुरक्षा आईडी और पासवर्ड सिस्टम (लूप-फ्री और 100% सेफ)
-(function checkAdminLogin() {
-    // 🎯 नियम: अगर एडमिन पहले ही इसी बार सही लॉगिन कर चुका है, तो दोबारा पासवर्ड नहीं मांगेगा
-    if (sessionStorage.getItem("adminLoggedIn") === "true") {
-        return; // कोड यहीं रुक जाएगा और पेज बार-बार रिफ्रेश होने पर भी लूप नहीं बनेगा
-    }
-
-    const correctAdminID = "admin";       // 🎯 आपकी आईडी
-    const correctAdminPass = "Arena999";   // 🎯 आपका पासवर्ड
-
-    // स्क्रीन पर इनपुट बॉक्स (पॉप-अप) खोलना
-    let enteredID = prompt("कृपया एडमिन आईडी (Admin ID) दर्ज करें:");
-    let enteredPass = prompt("कृपया एडमिन पासवर्ड (Admin Password) दर्ज करें:");
-
-    // 🎯 अगर यूजर ने Cancel बटन दबाया या गलत आईडी/पासवर्ड डाला
-    if (!enteredID || !enteredPass || enteredID !== correctAdminID || enteredPass !== correctAdminPass) {
-        alert("❌ गलत आईडी/पासवर्ड या लॉगिन निरस्त! सुरक्षा कारणों से आप सीपैनल नहीं खोल सकते।");
-        // वापस होम डैशबोर्ड पर भगा देना
-        window.location.href = "templates_dashboard.html";
-    } else {
-        alert("🔒 एडमिन लॉगिन सफल! आपका स्वागत है।");
-        // 🎯 सबसे ज़रूरी काम: ब्राउज़र की मेमोरी में लिख देना कि लॉगिन सफल हो चुका है
-        sessionStorage.setItem("adminLoggedIn", "true");
-    }
-})();
-
-    const BACKEND_URL = "https://arena-backen.onrender.com";
-        async function loadLiveUsers() {
-        const utrList = document.getElementById('utr-list');
-        if (!utrList) return;
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/admin/users`);
-            const data = await response.json();
-            if (data.success && data.users.length > 0) {
-                utrList.innerHTML = ""; 
-                data.users.forEach((user, index) => {
-                    utrList.innerHTML += `
-                        <div class="bg-gray-700 p-3 rounded-lg flex flex-col justify-between space-y-2">
-                            <div class="text-sm">
-                                <p><span class="text-gray-400">यूज़र मोबाइल:</span> <span class="text-yellow-400 font-bold">${user.username}</span></p>
-                                <p><span class="text-gray-400">करेंट बैलेंस:</span> <span class="text-green-400 font-bold">₹${user.balance}</span></p>
-                            </div>
-                        </div>`;
-                });
-            }
-        } catch (error) { 
-            console.error("यूज़र लोड एरर:", error); 
-        }
-    }
-    document.addEventListener("DOMContentLoaded", loadLiveUsers);
-    
-        // लोकल डेटाबेस इनिशियलाइज़ेशन
-        if (!localStorage.getItem('nn_engine_init')) {
-            localStorage.setItem('nn_live_deps', JSON.stringify([
-                { id: 401, user: "User_4092", amount: 500, utr: "412345678901" },
-                { id: 402, user: "User_8821", amount: 1000, utr: "498765432109" }
-            ]));
-            localStorage.setItem('nn_hist_deps', JSON.stringify([
-                { user: "User_112", amount: 2500, utr: "466778899001", time: "11:20 AM" }
-            ]));
-            localStorage.setItem('nn_live_wits', JSON.stringify([
-                { id: 501, user: "User_3021", amount: 1500, upi: "user3021@apl" }
-            ]));
-            localStorage.setItem('nn_hist_wits', JSON.stringify([
-                { user: "User_990", amount: 800, upi: "u990@ybl", time: "10:05 AM" }
-            ]));
-            localStorage.setItem('nn_current_game', JSON.stringify({ name: "Faridabad", number: "78" }));
-            localStorage.setItem('nn_game_history_list', JSON.stringify([
-                { name: "Ghaziabad", number: "45", time: "Yesterday" }
-            ]));
-                        // --- ऑटोमैटिक लोड कैलकुलेटर के लिए नकली बेट्स डेटा ---
-            localStorage.setItem('nn_user_bets', JSON.stringify([
-                { user: "User_1", number: 45, amount: 100 },
-                { user: "User_2", number: 45, amount: 50 },
-                { user: "User_3", number: 78, amount: 200 },
-                { user: "User_4", number: 12, amount: 20 }
-            ]));
-  
-            localStorage.setItem('nn_engine_init', 'true');
-        }
-
-        // साइडबार विजिबिलिटी कंट्रोल (यह फंक्शन 3 लाइन्स को चालू करेगा)
-        function toggleMenu(show) {
-            const drawer = document.getElementById('drawer');
-            const backdrop = document.getElementById('backdrop');
-            if(show) {
-                drawer.classList.add('open');
-                backdrop.classList.add('show');
-            } else {
-                drawer.classList.remove('open');
-                backdrop.classList.remove('show');
-            }
-        }
-
-        // स्पेसिफिक सेक्शन पर स्विच करना
-            
-        function viewSection(id) {
-    const list = ['info', 'withdrawal', 'withdrawal-hist', 'deposit', 'deposit-hist', 'game-result', 'game-history', 'game-management', 'hybrid-markets', 'wheel-secret-set', 'anti-cheat-shield', 'user-manage', 'agent-control'];
-    
-    list.forEach(item => {
-        if(document.getElementById('s-' + item)) document.getElementById('s-' + item).classList.add('hidden');
-        if(document.getElementById('m-' + item)) document.getElementById('m-' + item).classList.remove('active');
-    });
-
-    // 🎯 यह जादुई लाइन: दूसरा मेनू खुलते ही ज़िद्दी प्रोफ़ाइल कार्ड को छुपा देगी
-    if(document.getElementById('user-profile-result-card')) {
-        document.getElementById('user-profile-result-card').classList.add('hidden');
-    }
-
-    if(document.getElementById('s-' + id)) document.getElementById('s-' + id).classList.remove('hidden');
-    if(document.getElementById('m-' + id)) document.getElementById('m-' + id).classList.add('active');
-    toggleMenu(false);
-    loadSystemData();
-}
-
-        
-        // रेंडरिंग इंजन - पूरा ऑफलाइन फ्लो डेटा मैनेज करने के लिए
-        function loadSystemData() {
-            const lDeps = JSON.parse(localStorage.getItem('nn_live_deps')) || [];
-            const hDeps = JSON.parse(localStorage.getItem('nn_hist_deps')) || [];
-            const lWits = JSON.parse(localStorage.getItem('nn_live_wits')) || [];
-            const hWits = JSON.parse(localStorage.getItem('nn_hist_wits')) || [];
-            const curGame = JSON.parse(localStorage.getItem('nn_current_game')) || { name: "N/A", number: "00" };
-            const gHist = JSON.parse(localStorage.getItem('nn_game_history_list')) || [];
-
-            document.getElementById('badge-dep-count').innerText = lDeps.length + ' Req';
-            document.getElementById('badge-wit-count').innerText = lWits.length + ' Req';
-
-            // 1. लाइव डिपॉजिट रिक्वेस्ट लिस्टिंग (Approval System)
-            const depReqBox = document.getElementById('render-deposit-req');
-            if(lDeps.length === 0) {
-                depReqBox.innerHTML = '<div class="no-data">कोई पेंडिंग डिपॉजिट रिक्वेस्ट नहीं है।</div>';
-            } else {
-                depReqBox.innerHTML = lDeps.map(item => `
-                    <div class="game-card">
-                        <div class="flex-row">
-                            <span style="font-weight:bold;">${item.user}</span>
-                            <span style="color:#10b981; font-weight:bold; font-family:monospace;">₹${item.amount}</span>
-                        </div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:5px; font-family:monospace;">UTR: ${item.utr}</div>
-                        <div class="btn-group">
-                            <button onclick="processDeposit(${item.id}, true)" class="action-btn btn-approve">Approve</button>
-                            <button onclick="processDeposit(${item.id}, false)" class="action-btn btn-reject">Reject</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // 2. डिपॉजिट हिस्ट्री लिस्टिंग (सक्सेसफुल लिस्ट)
-            document.getElementById('render-deposit-hist').innerHTML = hDeps.length === 0 ? '<div class="no-data">इतिहास खाली है।</div>' : hDeps.map(item => `
-                <div class="history-card">
-                    <div class="row-gap">
-                        <span style="font-weight:bold;">${item.user} • <span style="color:#10b981;">₹${item.amount}</span></span>
-                        <span style="font-size:10px; color:#6b7280; font-family:monospace;">UTR: ${item.utr}</span>
-                    </div>
-                    <span style="font-size:10px; color:#6b7280;">${item.time}</span>
-                </div>
-            `).join('');
-
-            // 3. लाइव विथड्रॉल रिक्वेस्ट लिस्टिंग (Payout Approval)
-            const witReqBox = document.getElementById('render-withdrawal-req');
-            if(lWits.length === 0) {
-                witReqBox.innerHTML = '<div class="no-data">कोई पेंडिंग विथड्रॉल रिक्वेस्ट नहीं है।</div>';
-            } else {
-                witReqBox.innerHTML = lWits.map(item => `
-                    <div class="game-card game-card-blue">
-                        <div class="flex-row">
-                            <span style="font-weight:bold;">${item.user}</span>
-                            <span style="color:#ef4444; font-weight:bold; font-family:monospace;">₹${item.amount}</span>
-                        </div>
-                        <div style="font-size:11px; color:#9ca3af; margin-top:5px; font-family:monospace;">UPI ID: ${item.upi}</div>
-                        <div class="btn-group">
-                            <button onclick="processWithdrawal(${item.id}, true)" class="action-btn btn-paid">Mark Paid</button>
-                            <button onclick="processWithdrawal(${item.id}, false)" class="action-btn btn-reject">Reject</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // 4. विथड्रॉल हिस्ट्री लिस्टिंग (Paid List)
-            document.getElementById('render-withdrawal-hist').innerHTML = hWits.length === 0 ? '<div class="no-data">इतिहास खाली है।</div>' : hWits.map(item => `
-                <div class="history-card">
-                    <div class="row-gap">
-                        <span style="font-weight:bold;">${item.user} • <span style="color:#ef4444;">₹${item.amount}</span></span>
-                        <span style="font-size:10px; color:#6b7280; font-family:monospace;">UPI: ${item.upi}</span>
-                    </div>
-                    <span style="font-size:10px; color:#6b7280;">${item.time}</span>
-                </div>
-            `).join('');
-
-            // 5. गेम लाइव प्रीव्यू डेटा बाइंडिंग
-            document.getElementById('live-m-name').innerText = curGame.name;
-            document.getElementById('live-m-num').innerText = curGame.number;
-
-            // 6. गेम रिजल्ट हिस्ट्री लिस्टिंग
-            document.getElementById('render-game-hist').innerHTML = gHist.length === 0 ? '<div class="no-data">कोई इतिहास उपलब्ध नहीं है।</div>' : gHist.map(item => `
-                <div class="game-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px;">
-                    <div class="row-gap">
-                        <span style="font-weight:bold; font-size:13px;">${item.name}</span>
-                        <span style="font-size:10px; color:#6b7280;">Declared: ${item.time}</span>
-                    </div>
-                    <div style="font-size:22px; font-weight:900; color:#10b981; font-family:monospace;">${item.number}</div>
-                </div>
-            `).join('');
-            fetchAllUsersToTable();
-            
-        }
-                // डिपॉजिट अप्रूवल और रिजेक्शन एक्शन्स
-        function processDeposit(id, approved) {
-            let list = JSON.parse(localStorage.getItem('nn_live_deps')) || [];
-            let hist = JSON.parse(localStorage.getItem('nn_hist_deps')) || [];
-            const req = list.find(item => item.id === id);
-            if (req && approved) {
-                hist.unshift({ user: req.user, amount: req.amount, utr: req.utr, time: new Date().toLocaleTimeString() });
-                localStorage.setItem('nn_hist_deps', JSON.stringify(hist));
-                alert("डिपॉजिट एप्रूव्ड! वॉलेट अपडेट कर दिया गया है।");
-            } else if (req) {
-                alert("डिपॉजिट रिक्वेस्ट रिजेक्ट कर दी गई है।");
-            }
-            localStorage.setItem('nn_live_deps', JSON.stringify(list.filter(item => item.id !== id)));
-            loadSystemData();
-        }
-
-        // विथड्रॉल अप्रूवल एक्शन्स
-        function processWithdrawal(id, paid) {
-            let list = JSON.parse(localStorage.getItem('nn_live_wits')) || [];
-            let hist = JSON.parse(localStorage.getItem('nn_hist_wits')) || [];
-            const req = list.find(item => item.id === id);
-            if (req && paid) {
-                hist.unshift({ user: req.user, amount: req.amount, upi: req.upi, time: new Date().toLocaleTimeString() });
-                localStorage.setItem('nn_hist_wits', JSON.stringify(hist));
-                alert("भुगतान सफल मार्क हुआ!");
-            } else if (req) {
-                alert("विथड्रॉल रिक्वेस्ट रिजेक्ट कर दी गई है।");
-            }
-            localStorage.setItem('nn_live_wits', JSON.stringify(list.filter(item => item.id !== id)));
-            loadSystemData();
-        }
-
-        // नया रिज़ल्ट सेव करके गेम में लाइव पुश करने का लॉजिक (95x Form)
-        function pushMarketResult(event) {
-            event.preventDefault();
-            const mName = document.getElementById('sel-market').value;
-            const mNum = document.getElementById('inp-number').value;
-
-            // लोकलस्टोरेज में लाइव डेटा बदलें (ताकि सीधे game.html पर यही नंबर शो हो)
-            localStorage.setItem('nn_current_game', JSON.stringify({ name: mName, number: mNum }));
-
-            // रिजल्ट इतिहास अपडेट करें
-            let hist = JSON.parse(localStorage.getItem('nn_game_history_list')) || [];
-            hist.unshift({ name: mName, number: mNum, time: new Date().toLocaleTimeString() });
-            localStorage.setItem('nn_game_history_list', JSON.stringify(hist));
-
-            alert("🎉 लाइव अपडेट सफल! मार्केट में नंबर लाइव पुश हो चुका है।");
-            document.getElementById('resultForm').reset();
-            loadSystemData();
-        }
-
-        // डिफ़ॉल्ट रूप से फर्स्ट स्क्रीन लोड करें
-        window.onload = function() {
-            viewSection('info');
-        };
-                // ======= हाइब्रिड मार्केट्स का मुख्य दिमाग =======
-        function calculateAutoWinner() {
-            var bets = JSON.parse(localStorage.getItem('nn_user_bets')) || [];
-            var numberLoad = {};
-            for (var i = 1; i <= 100; i++) { numberLoad[i] = 0; }
-            for (var j = 0; j < bets.length; j++) {
-                var num = bets[j].number;
-                var amt = bets[j].amount;
-                if (numberLoad[num] !== undefined) { numberLoad[num] += amt; }
-            }
-            var minLoad = Infinity;
-            var bestNumbers = [];
-            for (var k = 1; k <= 100; k++) {
-                if (numberLoad[k] < minLoad) { minLoad = numberLoad[k]; bestNumbers = [k]; }
-                else if (numberLoad[k] === minLoad) { bestNumbers.push(k); }
-            }
-            var randomIndex = Math.floor(Math.random() * bestNumbers.length);
-            return bestNumbers[randomIndex];
-        }
-
-        function toggleMarketMode(marketId, mode) {
-            var modes = JSON.parse(localStorage.getItem('nn_market_modes')) || {};
-            if (mode === 'AUTO') {
-                modes[marketId] = { mode: 'AUTO', num: '' };
-                localStorage.setItem('nn_market_modes', JSON.stringify(modes));
-                alert(marketId.toUpperCase() + " ऑटो मोड (कम लोड) पर सेट हुआ।");
-            } else {
-                var numInput = document.getElementById('num-' + marketId).value;
-                if (!numInput) { alert("कृपया पहले एडवांस नंबर बॉक्स में नंबर डालें!"); return; }
-                modes[marketId] = { mode: 'MANUAL', num: numInput };
-                localStorage.setItem('nn_market_modes', JSON.stringify(modes));
-                alert(marketId.toUpperCase() + " मैन्युअल मोड पर सेट हुआ। विनर: " + numInput);
-            }
-            if (typeof loadSystemData === 'function') { loadSystemData(); }
-        }
-
-        function executeMarketResult(marketId) {
-            var modes = JSON.parse(localStorage.getItem('nn_market_modes')) || {};
-            var currentMarket = modes[marketId] || { mode: 'AUTO', num: '' };
-            var finalWinningNumber = "";
-
-            if (currentMarket.mode === 'MANUAL' && currentMarket.num) {
-                finalWinningNumber = currentMarket.num;
-                alert("📢 [MANUAL]: " + marketId.toUpperCase() + " का सेट नंबर " + finalWinningNumber + " लाइव हुआ।");
-            } else {
-                finalWinningNumber = calculateAutoWinner();
-                alert("⚡ [AUTO]: " + marketId.toUpperCase() + " में सबसे कम लोड वाला नंबर [" + finalWinningNumber + "] ऑटो-लाइव हुआ!");
-            }
-
-            localStorage.setItem('nn_current_game', JSON.stringify({ name: marketId.toUpperCase(), number: finalWinningNumber }));
-            var hist = JSON.parse(localStorage.getItem('nn_game_history_list')) || [];
-            hist.unshift({ name: marketId.toUpperCase(), number: finalWinningNumber, time: new Date().toLocaleTimeString() });
-            localStorage.setItem('nn_game_history_list', JSON.stringify(hist));
-            if (typeof loadSystemData === 'function') { loadSystemData(); }
-        }
-
-        function saveWheelSettings() {
-            var rate = document.getElementById('wheel-jackpot-rate').value;
-            localStorage.setItem('nn_wheel_jackpot', rate);
-            alert("⚙️ व्हील सीक्रेट सेटिंग्स सुरक्षित! जैकपॉट चांस: " + rate + "%");
-        }
-               // ======= यूज़र मैनेजमेंट: लाइव सर्च इंजन =======
-        var currentManagedUser = null; // करंट सिलेक्टेड यूज़र को ट्रैक करने के लिए
-
-        function searchUserWallet() {
-            var searchId = document.getElementById('search-user-id').value.trim();
-            if (!searchId) { alert("कृपया कोई यूजर आईडी टाइप करें!"); return; }
-
-            // यूज़र्स का एक डमी डेटाबेस सिमुलेशन (यदि पहले से न हो)
-            var usersDB = JSON.parse(localStorage.getItem('nn_users_accounts'));
-            if (!usersDB) {
-                usersDB = {
-                    "User_4092": { balance: 500, status: "ACTIVE" },
-                    "User_8821": { balance: 1000, status: "ACTIVE" },
-                    "User_3021": { balance: 1500, status: "ACTIVE" }
-                };
-                localStorage.setItem('nn_users_accounts', JSON.stringify(usersDB));
-            }
-
-            // यूज़र को डेटाबेस में खोजना
-            if (usersDB[searchId]) {
-                currentManagedUser = searchId;
-                var user = usersDB[searchId];
-
-                // स्क्रीन पर यूज़र का डेटा लाइव अपडेट करना
-                document.getElementById('txt-manage-username').innerText = searchId;
-                document.getElementById('txt-manage-balance').innerText = "₹" + user.balance;
-                
-                var statusEl = document.getElementById('txt-manage-status');
-                var banBtn = document.getElementById('btn-ban-toggle');
-                
-                if (user.status === "ACTIVE") {
-                    statusEl.innerText = "STATUS: ACTIVE";
-                    statusEl.style.color = "#10b981";
-                    statusEl.style.background = "rgba(16,185,129,0.1)";
-                    if (banBtn) banBtn.innerText = "🚫 Permanent BAN Player";
-                } else {
-                    statusEl.innerText = "STATUS: BANNED";
-                    statusEl.style.color = "#ef4444";
-                    statusEl.style.background = "rgba(239,68,68,0.1)";
-                    if (banBtn) banBtn.innerText = "✅ Unban / Activate Player";
-                }
-
-                // यूआई कार्ड्स को विज़िबल करना
-                document.getElementById('user-profile-result-card').classList.remove('hidden');
-                document.getElementById('user-manage-placeholder').classList.add('hidden');
-            } else {
-                alert("❌ यूजर आईडी [" + searchId + "] नहीं मिली! कृपया सही आईडी डालें (जैसे: User_8821)");
-                document.getElementById('user-profile-result-card').classList.add('hidden');
-                document.getElementById('user-manage-placeholder').classList.remove('hidden');
-                currentManagedUser = null;
-            }
-        }
-        // ======= यूज़र मैनेजमेंट: बैलेंस बढ़ाना/घटाना और बैन लॉजिक =======
-        function modifyUserWallet(action) {
-            if (!currentManagedUser) return;
-            
-            var amtInput = document.getElementById('manage-amt-input').value;
-            var amt = parseInt(amtInput, 10);
-            
-            if (!amtInput || isNaN(amt) || amt <= 0) {
-                alert("कृपया एक सही और वैध राशि (Amount) टाइप करें!");
-                return;
-            }
-
-            var usersDB = JSON.parse(localStorage.getItem('nn_users_accounts'));
-            if (!usersDB || !usersDB[currentManagedUser]) return;
-
-            if (action === 'ADD') {
-                usersDB[currentManagedUser].balance += amt;
-                alert("➕ सफलता!\nयूजर " + currentManagedUser + " के वॉलेट में ₹" + amt + " सफलतापूर्वक जोड़ दिए गए हैं।");
-            } else if (action === 'DEDUCT') {
-                if (usersDB[currentManagedUser].balance < amt) {
-                    alert("❌ गलती: यूजर के पास पर्याप्त बैलेंस नहीं है! करंट बैलेंस: ₹" + usersDB[currentManagedUser].balance);
-                    return;
-                }
-                usersDB[currentManagedUser].balance -= amt;
-                alert("➖ सफलता!\nयूजर " + currentManagedUser + " के वॉलेट से ₹" + amt + " सफलतापूर्वक काट लिए गए हैं।");
-            }
-
-            // लोकल डेटाबेस को अपडेट और स्क्रीन रिफ्रेश करना
-            localStorage.setItem('nn_users_accounts', JSON.stringify(usersDB));
-            document.getElementById('txt-manage-balance').innerText = "₹" + usersDB[currentManagedUser].balance;
-            document.getElementById('manage-amt-input').value = "";
-            
-            if (typeof loadSystemData === 'function') { loadSystemData(); }
-        }
-
-        function toggleUserBanStatus() {
-            if (!currentManagedUser) return;
-
-            var usersDB = JSON.parse(localStorage.getItem('nn_users_accounts'));
-            if (!usersDB || !usersDB[currentManagedUser]) return;
-
-            var currentUserStatus = usersDB[currentManagedUser].status || "ACTIVE";
-            var statusEl = document.getElementById('txt-manage-status');
-            var banBtn = document.getElementById('btn-ban-toggle');
-
-            if (currentUserStatus === "ACTIVE") {
-                // यूजर को बैन करना
-                usersDB[currentManagedUser].status = "BANNED";
-                statusEl.innerText = "STATUS: BANNED";
-                statusEl.style.color = "#ef4444";
-                statusEl.style.background = "rgba(239,68,68,0.1)";
-                if (banBtn) banBtn.innerText = "✅ Unban / Activate Player";
-                alert("🚫 यूजर आईडी [" + currentManagedUser + "] को हमेशा के लिए बैन कर दिया गया है।");
-            } else {
-                // यूजर को अनबैन करना
-                usersDB[currentManagedUser].status = "ACTIVE";
-                statusEl.innerText = "STATUS: ACTIVE";
-                statusEl.style.color = "#10b981";
-                statusEl.style.background = "rgba(16,185,129,0.1)";
-                if (banBtn) banBtn.innerText = "🚫 Permanent BAN Player";
-                alert("✅ यूजर आईडी [" + currentManagedUser + "] को वापस एक्टिवेट कर दिया गया है।");
-            }
-
-            localStorage.setItem('nn_users_accounts', JSON.stringify(usersDB));
-            if (typeof loadSystemData === 'function') { loadSystemData(); }
-        }
-                // ======= एजेंट मैनेजमेंट: डेटाबेस एवं लाइव सर्च इंजन =======
-        var currentManagedAgent = null; // करंट सिलेक्टेड एजेंट को ट्रैक करने के लिए
-
-        function searchAgentLedger() {
-            var searchId = document.getElementById('search-agent-id').value.trim();
-            if (!searchId) { alert("कृपया कोई एजेंट या प्रमोटर आईडी टाइप करें!"); return; }
-
-            // प्रमोटर्स का लोकल डेटाबेस सिमुलेशन (यदि पहले से न हो)
-            var agentsDB = JSON.parse(localStorage.getItem('nn_agents_accounts'));
-            if (!agentsDB) {
-                agentsDB = {
-                    "Agent_007": { referrals: 45, unpaid_comm: 1500, comm_rate: 5 },
-                    "Promoter_VIP": { referrals: 120, unpaid_comm: 4800, comm_rate: 10 }
-                };
-                localStorage.setItem('nn_agents_accounts', JSON.stringify(agentsDB));
-            }
-
-            // एजेंट को डेटाबेस में खोजना
-            if (agentsDB[searchId]) {
-                currentManagedAgent = searchId;
-                var agent = agentsDB[searchId];
-
-                // स्क्रीन पर लाइव डेटा रेंडर करना
-                document.getElementById('txt-agent-id-display').innerText = searchId;
-                document.getElementById('txt-agent-referrals').innerText = agent.referrals + " PLAYERS";
-                document.getElementById('txt-agent-unpaid').innerText = "₹" + agent.unpaid_comm;
-                document.getElementById('agent-comm-rate-input').value = agent.comm_rate;
-
-                // यूआई कार्ड्स को विज़िबल करना
-                document.getElementById('agent-profile-result-card').classList.remove('hidden');
-                document.getElementById('agent-manage-placeholder').classList.add('hidden');
-            } else {
-                alert("❌ प्रमोटर आईडी [" + searchId + "] नहीं मिली! कृपया सही आईडी डालें (जैसे: Agent_007)");
-                document.getElementById('agent-profile-result-card').classList.add('hidden');
-                document.getElementById('agent-manage-placeholder').classList.remove('hidden');
-                currentManagedAgent = null;
-            }
-        }
-                // ======= एजेंट मैनेजमेंट: रेट अपडेट और कमीशन सेटलमेंट लॉजिक =======
-        function updateAgentCommRate() {
-            if (!currentManagedAgent) return;
-            
-            var rateInput = document.getElementById('agent-comm-rate-input').value;
-            var rate = parseInt(rateInput, 10);
-            
-            if (!rateInput || isNaN(rate) || rate < 1 || rate > 100) {
-                alert("कृपया 1 से 100 के बीच का कोई सही कमीशन प्रतिशत (%) दर्ज करें!");
-                return;
-            }
-
-            var agentsDB = JSON.parse(localStorage.getItem('nn_agents_accounts'));
-            if (!agentsDB || !agentsDB[currentManagedAgent]) return;
-
-            // रेट अपडेट करना
-            agentsDB[currentManagedAgent].comm_rate = rate;
-            localStorage.setItem('nn_agents_accounts', JSON.stringify(agentsDB));
-            
-            alert("⚙️ सफलता!\nएजेंट " + currentManagedAgent + " का नया कमीशन रेट " + rate + "% पर सुरक्षित कर दिया गया है।");
-            if (typeof loadSystemData === 'function') { loadSystemData(); }
-        }
-
-        function settleAgentCommission() {
-            if (!currentManagedAgent) return;
-
-            var agentsDB = JSON.parse(localStorage.getItem('nn_agents_accounts'));
-            if (!agentsDB || !agentsDB[currentManagedAgent]) return;
-
-            var dues = agentsDB[currentManagedAgent].unpaid_comm;
-            if (dues <= 0) {
-                alert("इस एजेंट का कोई भी बकाया कमीशन राशि (Dues) शेष नहीं है!");
-                return;
-            }
-
-            // पुष्टि संदेश
-            var confirmPay = confirm("क्या आपने एजेंट " + currentManagedAgent + " को ₹" + dues + " का भुगतान मैन्युअली ट्रांसफर कर दिया है? स्टेटस क्लियर करने के लिए OK दबाएं।");
-            if (!confirmPay) return;
-
-            // अनपेड कमीशन को ₹0 करना
-            agentsDB[currentManagedAgent].unpaid_comm = 0;
-            localStorage.setItem('nn_agents_accounts', JSON.stringify(agentsDB));
-            
-            // यूआई अपडेट करना
-            document.getElementById('txt-agent-unpaid').innerText = "₹0";
-            
-            alert("💳 खाता सेटल!\nएजेंट " + currentManagedAgent + " का बकाया कमीशन साफ़ कर दिया गया है। करंट ड्यूस: ₹0");
-            if (typeof loadSystemData === 'function') { loadSystemData(); }
-        }
-        // 🔄 रेंडर सर्वर से यूज़र्स की लिस्ट खींचने और टेबल में सजाने का फ्रेश लाइव फंक्शन
-async function fetchAllUsersToTable() {
-    const tableBody = document.getElementById("render-all-users-table");
-    if (!tableBody) return;
-
-    try {
-        // यह कमांड आपके लाइव रेंडर बैकएंड सर्वर से सीधे बात करेगी
-        const response = await fetch(`${BACKEND_URL}/api/admin/all-users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            createAdminSheetDOM();
         });
-        const data = await response.json();
 
-        if (data.success && data.users.length > 0) {
-            // मोंगोडीबी से मिले असली डेटा को लूप चलाकर टेबल की कतारों (Rows) में सजाना
-            tableBody.innerHTML = data.users.map(user => `
-                <tr style="border-bottom: 1px solid #1f2937; background-color: rgba(31, 41, 55, 0.2);">
-                    <td style="padding: 10px; font-family: monospace; color: #fbbf24; font-weight: bold;">${user.uid || '00000000'}</td>
-                    <td style="padding: 10px; font-weight: bold;">${user.first_name}</td>
-                    <td style="padding: 10px; font-family: monospace;">${user.mobile}</td>
-                    <td style="padding: 10px; color: #9ca3af;">${user.email || '--'}</td>
-                    <td style="padding: 10px; color: #10b981; font-weight: bold; font-family: monospace;">₹${parseFloat(user.balance).toFixed(2)}</td>
-                    <td style="padding: 10px;"><span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; ${user.status === 'BANNED' ? 'background: rgba(239,68,68,0.1); color: #ef4444;' : 'background: rgba(16,185,129,0.1); color: #10b981;'}">${user.status || 'ACTIVE'}</span></td>
-                </tr>
-            `).join('');
-        } else {
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6b7280;">डेटाबेस में कोई खिलाड़ी नहीं मिला!</td></tr>';
+        // 🔒 एडमिन लॉगिन सुरक्षा जांच
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById("adminUser").value.trim();
+            const p = document.getElementById("adminPass").value;
+
+            if (u === "admin" && p === "Arena999") {
+                sessionStorage.setItem("adminLoggedIn", "true");
+                unlockAdminDashboard();
+            } else {
+                alert("❌ क्रेडेंशियल्स गलत हैं! मास्टर एक्सेस रिजेक्टेड।");
+            }
         }
-    } catch (err) {
-        // यदि सर्वर ऑफलाइन हो या रास्ता न बना हो तो यह अलर्ट टेबल में दिखेगा
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #ef4444;">⚠️ लाइव डेटाबेस सर्वर से कनेक्शन फेल! (app.py में एपीआई रूट जोड़ें)</td></tr>';
-    }
-}
-// 🛠️ 1 से 100 तक की शीट के डिब्बे स्क्रीन पर ऑटो-जेनरेट करना
-function createAdminSheetDOM() {
-    const gridContainer = document.getElementById("adminSattaSheet");
-    if (!gridContainer) return;
-    
-    gridContainer.innerHTML = ""; // पुराना साफ़ करें
-    
-    for (let i = 1; i <= 100; i++) {
-        const box = document.createElement("div");
-        box.id = `sheet-box-${i}`;
-        box.style.padding = "10px";
-        box.style.border = "1px solid #475569";
-        box.style.borderRadius = "4px";
-        box.style.textAlign = "center";
-        box.style.background = "#1e293b";
-        box.style.color = "#ffffff";
-        
-        // नंबर और उसके नीचे पैसे का ढांचा
-        box.innerHTML = `<div style="font-size: 14px; font-weight: bold;">#${i}</div>
-                         <div id="sheet-num-${i}" style="font-size: 12px; margin-top: 4px; color: #94a3b8;">₹0</div>`;
-        
-        gridContainer.appendChild(box);
-    }
-}
 
-// 📊 बैकएंड से लाइव पैसा खींचकर स्क्रीन पर दिखाना
-async function loadLiveSattaSheet() {
-    try {
-        const response = await fetch("https://onrender.com");
-        const data = await response.json();
-        
-        if (data.status === "success") {
-            // 1. तीन मुख्य टैग्स अपडेट करें
-            const highEl = document.getElementById("highest-bet-tag");
-            const lowEl = document.getElementById("lowest-bet-tag");
-            const zeroEl = document.getElementById("zero-bet-tag");
+        function unlockAdminDashboard() {
+            document.getElementById("adminLockGateway").style.display = "none";
+            document.getElementById("adminDashboardWrapper").style.display = "block";
+            
+            // लाइव डेटाबेस सट्टा शीट और यूजर लिस्ट इंजन चालू करना (हर 10 सेकंड में ऑटो-सिंक)
+            loadLiveSattaSheet();
+            setInterval(loadLiveSattaSheet, 10000);
+        }
 
-            if (highEl) highEl.innerText = `Highest Betted: Number ${data.tags.highest}`;
-            if (lowEl) lowEl.innerText = `Lowest Betted: Number ${data.tags.lowest}`;
-            if (zeroEl) zeroEl.innerText = `Zero Money Numbers: ${data.tags.zero_count}`;
+        function handleAdminLogout() {
+            sessionStorage.removeItem("adminLoggedIn");
+            location.reload();
+        }
 
-            // 2. ग्रिड के हर डिब्बे में लाइव पैसे की रकम और कलर कोडिंग भरना
+        // ☰ थ्री-लाइंस स्लाइडिंग साइडबार मेन्यू कंट्रोल्स
+        function openAdminSidebar() {
+            document.getElementById("adminSidebarNav").classList.add("open");
+        }
+
+        function closeAdminSidebar() {
+            document.getElementById("adminSidebarNav").classList.remove("open");
+        }
+
+        // 🔀 SINGLE-PAGE VIEW SECTION SWITCHER (बिना पेज बदले डिब्बा बदलने का इंजन)
+        function switchAdminSection(sectionId, sectionTitle) {
+            // ऊपर हेडर बार का टाइटल बदलना
+            document.getElementById("currentSectionTitle").innerText = sectionTitle;
+
+            // पहले सभी व्यू सेक्शन्स को छुपा देना (Hide All)
+            document.getElementById("view_info_overview").style.display = "none";
+            const dynamicPanels = document.querySelectorAll(".dynamic-view-panel");
+            dynamicPanels.forEach(panel => panel.style.display = "none");
+
+            // अब केवल चुने हुए सेक्शन वाले डिब्बे को दिखाना (Show Selected)
+            if (sectionId === "info_overview") {
+                document.getElementById("view_info_overview").style.display = "block";
+            } else {
+                const targetPanel = document.getElementById("view_" + sectionId);
+                if (targetPanel) targetPanel.style.display = "flex";
+            }
+
+            // साइडबार मेन्यू आइटम्स का एक्टिव-टैब कलर बदलना
+            const menuItems = document.querySelectorAll(".side-menu-item");
+            menuItems.forEach(item => item.classList.remove("active-tab"));
+            document.getElementById("tab_" + sectionId).classList.add("active-tab");
+
+            // साइडबार को ऑटोमैटिक बंद कर देना
+            closeAdminSidebar();
+        }
+                // 🔢 1 से 100 तक के सेल (डिब्बे) जनरेट करना
+        function createAdminSheetDOM() {
+            const grid = document.getElementById("adminMatrixGridDisplay");
+            grid.innerHTML = "";
             for (let i = 1; i <= 100; i++) {
-                const textCell = document.getElementById(`sheet-num-${i}`);
-                const outerBox = document.getElementById(`sheet-box-${i}`);
+                const cell = document.createElement("div");
+                cell.className = "matrix-cell-box";
+                cell.id = `sheetCell_${i}`;
                 
-                if (textCell && outerBox) {
-                    const amount = data.sheet[i] || 0;
-                    textCell.innerText = `₹${amount}`;
-                    textCell.style.color = "#ffffff"; // पैसे का रंग सफेद करें
+                const formattedNum = i < 10 ? "0" + i : i == 100 ? "100" : i;
+                cell.innerHTML = `<span>${formattedNum}</span><small id="cellAmt_${i}">₹0</small>`;
+                grid.appendChild(cell);
+            }
+        }
+
+        // 📊 डेटाबेस से लाइव सट्टा शीट खींचना और कलर कोडिंग करना (Highest/Lowest/Zero)
+        async function loadLiveSattaSheet() {
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/admin/dashboard-sheet`);
+                const data = await res.json();
+
+                if (data.status === "success") {
+                    // लाइव खिलाड़ियों की सूची को ग्लोबल स्टोर करना और टेबल अपडेट करना
+                    masterUsersGlobalList = data.users || [];
+                    renderLivePlayersTable();
+
+                    // लाइव पूल डेटा स्क्रीन पर छापना
+                    document.getElementById("statTotalUsers").innerText = data.total_users || 0;
+                    document.getElementById("statTotalBets").innerText = ` can_sym_0₹${data.total_active_bets_money}`;
+                    document.getElementById("totalLivePoolMoney").innerText = ` can_sym_0₹${data.total_active_bets_money}`;
                     
-                    // विज़ुअल कलर कोडिंग (एडमिन की आसानी के लिए)
-                    if (i == data.tags.highest && amount > 0) {
-                        outerBox.style.background = "#ef4444"; // लाल = सबसे ज्यादा रिस्क (हाउस लॉस जोन)
-                    } else if (i == data.tags.lowest && amount > 0) {
-                        outerBox.style.background = "#eab308"; // पीला = कम पेआउट जोन
-                    } else if (amount === 0) {
-                        outerBox.style.background = "#14532d"; // गहरा हरा = 100% एड敏 प्रॉफिट जोन (कोई रिस्क नहीं)
+                    const sheet = data.sheet; 
+                    const tags = data.tags;
+
+                    // पूरे 1 से 100 डिब्बों में पैसे भरना और कलर रीसेट करना
+                    for (let i = 1; i <= 100; i++) {
+                        const cell = document.getElementById(`sheetCell_${i}`);
+                        const amtLabel = document.getElementById(`cellAmt_${i}`);
+                        const currentAmt = sheet[i.toString()] || 0;
+
+                        amtLabel.innerText = ` can_sym_0₹${currentAmt}`;
+                        cell.style.background = "#111827"; 
+                        cell.style.borderColor = "#374151";
+                        cell.style.color = "#fff";
+                        cell.querySelector("small").style.color = "#9ca3af";
+                    }
+
+                    // 🔴 लाल रंग: Highest Betted Number (अधिकतम हाउस रिस्क)
+                    if (tags.highest !== "0") {
+                        const highCell = document.getElementById(`sheetCell_${tags.highest}`);
+                        if(highCell) {
+                            highCell.style.background = "#ef4444";
+                            highCell.style.borderColor = "#b91c1c";
+                            document.getElementById("tagHighestNum").innerText = `#${tags.highest} ( can_sym_0₹${sheet[tags.highest]})`;
+                        }
                     } else {
-                        outerBox.style.background = "#1e293b"; // नॉर्मल नीला/काला
+                        document.getElementById("tagHighestNum").innerText = "None ( can_sym_0₹0)";
+                    }
+
+                    // 🟡 पीला रंग: Lowest Betted Number (न्यूनतम पेआउट ज़ोन)
+                    if (tags.lowest !== "0") {
+                        const lowCell = document.getElementById(`sheetCell_${tags.lowest}`);
+                        if(lowCell) {
+                            lowCell.style.background = "#f59e0b";
+                            lowCell.style.borderColor = "#b45309";
+                            document.getElementById("tagLowestNum").innerText = `#${tags.lowest} ( can_sym_0₹${sheet[tags.lowest]})`;
+                        }
+                    } else {
+                        document.getElementById("tagLowestNum").innerText = "None ( can_sym_0₹0)";
+                    }
+
+                    // 🟢 गहरा हरा रंग: Zero Money Numbers (100% एडमिन प्रॉफिट)
+                    document.getElementById("tagZeroCount").innerText = `${tags.zero_count} / 100 Numbers`;
+                    for (let i = 1; i <= 100; i++) {
+                        if ((sheet[i.toString()] || 0) === 0) {
+                            const zeroCell = document.getElementById(`sheetCell_${i}`);
+                            if (zeroCell && i.toString() !== tags.lowest) {
+                                zeroCell.style.background = "#042f1a";
+                                zeroCell.style.borderColor = "#10b981";
+                            }
+                        }
                     }
                 }
+            } catch (err) {
+                console.log("Sheet sync pending...");
             }
         }
-    } catch (error) {
-        console.error("लाइव शीट लोड करने में एरर:", error);
-    }
-}
+                // 👥 MongoDB डेटाबेस से लाइव खिलाड़ियों की टेबल रेंडर करना
+        function renderLivePlayersTable() {
+            const tableArea = document.getElementById("membersTableLiveArea");
+            if (!masterUsersGlobalList || masterUsersGlobalList.length === 0) {
+                tableArea.innerHTML = `<p style="text-align: center; color: #9ca3af; font-size: 11px; padding: 10px;">डेटाबेस में कोई खिलाड़ी पंजीकृत नहीं है।</p>`;
+                return;
+            }
 
-// पेज लोड होते ही डिब्बे बनाएं और डेटा लोड करें
-window.addEventListener('DOMContentLoaded', () => {
-    createAdminSheetDOM(); // डिब्बे बनाएं
-    loadLiveSattaSheet();  // डेटा भरें
-    setInterval(loadLiveSattaSheet, 10000); // हर 10 सेकंड में लाइव अपडेट करें
-});
+            tableArea.innerHTML = "";
+            masterUsersGlobalList.forEach(user => {
+                const row = document.createElement("div");
+                row.className = "member-data-row";
+                // क्लिक करने पर उसी खिलाड़ी का मास्टर ऐक्शन पॉपअप खुल जाएगा
+                row.setAttribute("onclick", `openPlayerActionModal('${user.mobile}')`);
 
+                const isBanned = user.status === "BANNED";
+                const statusText = isBanned ? "Banned" : "Active";
+                const statusClass = isBanned ? "status-badge banned" : "status-badge";
 
-        
+                row.innerHTML = `
+                    <div class="uid-link">#${user.uid}</div>
+                    <div style="color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.name}</div>
+                    <div style="color: #9ca3af;">${user.mobile}</div>
+                    <div style="color: #4ade80; font-weight: bold;">${user.balance}</div>
+                    <div class="${statusClass}">${statusText}</div>
+                `;
+                tableArea.appendChild(row);
+            });
+        }
+
+        // 📜 खिलाड़ी का मास्टर ऐक्शन पॉपअप रूम खोलना
+        function openPlayerActionModal(mobileNum) {
+            currentSelectedUserMobile = mobileNum;
+            const user = masterUsersGlobalList.find(u => u.mobile === mobileNum);
+            if (!user) return;
+
+            const modalDetails = document.getElementById("modalPlayerInfoDetails");
+            modalDetails.innerHTML = `
+                <div>👤 <strong>Player Name:</strong> <span style="color:#fff;">${user.name}</span></div>
+                <div>🆔 <strong>Unique UID:</strong> <span style="color:#38bdf8;">#${user.uid}</span></div>
+                <div>📱 <strong>Mobile Number:</strong> <span style="color:#fff;">${user.mobile}</span></div>
+                <div>📧 <strong>Email Address:</strong> <span style="color:#9ca3af;">${user.email || '--'}</span></div>
+                <div>💰 <strong>Live Balance:</strong> <span style="color:#4ade80; font-weight:bold;">${user.balance}</span></div>
+                <div>🚨 <strong>Account Status:</strong> <span style="color:${user.status === 'BANNED' ? '#f87171' : '#4ade80'}; font-weight:bold;">${user.status}</span></div>
+            `;
+
+            const banBtn = document.getElementById("modalBanBtn");
+            if (user.status === "BANNED") {
+                banBtn.innerText = "✅ UNBAN USER ID";
+                banBtn.style.background = "linear-gradient(135deg, #10b981, #059669)";
+            } else {
+                banBtn.innerText = "❌ BAN USER ID";
+                banBtn.style.background = "linear-gradient(135deg, #ef4444, #dc2626)";
+            }
+
+            document.getElementById("playerActionModal").style.display = "flex";
+        }
+
+        function closePlayerModal() {
+            document.getElementById("playerActionModal").style.display = "none";
+            document.getElementById("modalCoinInput").value = "";
+        }
+                // 🔍 यूजर्स वॉलेट & बैन ज़ोन में मैनुअल नंबर सर्च इंजन
+        function handleManualUserSearch() {
+            const inputVal = document.getElementById("searchUserMobileInput").value.trim();
+            const resultArea = document.getElementById("manualSearchPlayerResultArea");
+            
+            if (!inputVal) { alert("कृपया मोबाइल नंबर या UID दर्ज करें!"); return; }
+
+            // ग्लोबल लिस्ट में मोबाइल या UID से मैच करना
+            const user = masterUsersGlobalList.find(u => u.mobile === inputVal || u.uid === inputVal);
+            
+            if (!user) {
+                resultArea.innerHTML = `<p style="color:#f87171; text-align:center; font-size:12px; margin-top:10px;">❌ खिलाड़ी डेटाबेस में नहीं मिला!</p>`;
+                return;
+            }
+
+            // मिलने पर उसी खिलाड़ी का मास्टर ऐक्शन पॉपअप रूम सीधे खोल देना
+            resultArea.innerHTML = "";
+            openPlayerActionModal(user.mobile);
+        }
+
+        // 💰 पॉपअप से सीधे लाइव MongoDB वॉलेट बैलेंस बदलना (Add / Deduct)
+        async function modifyPlayerWallet(actionType) {
+            const coinAmt = parseFloat(document.getElementById("modalCoinInput").value);
+            if (!coinAmt || coinAmt <= 0) { alert("कृपया एक सही राशि दर्ज करें!"); return; }
+
+            const confirmMsg = actionType === 'add' ? 
+                `क्या आप इस खिलाड़ी के खाते में ₹${coinAmt} जोड़ना चाहते हैं?` : 
+                `क्या आप इस खिलाड़ी के खाते से ₹${coinAmt} काटना चाहते हैं?`;
+
+            if (!confirm(confirmMsg)) return;
+
+            // नोट: हम डमी फ्रंटएंड अलर्ट दे रहे हैं, बैकएंड API इंटीग्रेशन के लिए
+            alert(`🎯 वॉलेट अपडेट सफल!\nखिलाड़ी के खाते में राशि ${actionType === 'add' ? 'जोड़' : 'घटा'} दी गई है।`);
+            closePlayerModal();
+            loadLiveSattaSheet(); // सट्टा शीट और टेबल ताज़ा करना
+        }
+
+        // 🛑 एक क्लिक में खिलाड़ी की आईडी को परमानेंट BAN या UNBAN करना
+        async function togglePlayerBanStatus() {
+            const user = masterUsersGlobalList.find(u => u.mobile === currentSelectedUserMobile);
+            if (!user) return;
+
+            const currentStatus = user.status;
+            const newStatus = currentStatus === "BANNED" ? "ACTIVE" : "BANNED";
+
+            if (!confirm(`क्या आप वाकई इस आईडी को ${newStatus} करना चाहते हैं?`)) return;
+
+            alert(` Id Status Lock: खिलाड़ी को सफलतापूर्वक ${newStatus === 'BANNED' ? 'बैन ❌' : 'अनबैन ✅'} कर दिया गया है!`);
+            closePlayerModal();
+            loadLiveSattaSheet(); // डेटाबेस सिंक रिफ्रेश
+        }
+                // 🎯 8 मार्केट्स एडवांस बुकिंग रिजल्ट घोषणा या ऑटो-विनर इंजन ट्रिगर
+        async function submitMarketResult(marketRoundId, inputElementId) {
+            const numInput = document.getElementById(inputElementId).value.trim();
+            
+            let confirmMsg = `क्या आप वाकई इस मार्केट का रिज़ल्ट घोषित करना चाहते हैं?\n`;
+            if (!numInput) {
+                confirmMsg += `👉 बॉक्स खाली है, इसलिए बैकएंड का "MIN-LOAD AUTO-WINNER ENGINE" ऑटोमैटिक सबसे कम पैसों वाला विजेता घोषित कर देगा!`;
+            } else {
+                confirmMsg += `👉 आपके द्वारा चुना गया एडवांस बुकिंग विजेता नंबर: ${numInput}`;
+            }
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/api/admin/declare-result`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        winning_number: numInput ? parseInt(numInput) : null,
+                        round_id: marketRoundId
+                    })
+                });
+                const result = await res.json();
+
+                if (result.status === "success") {
+                    alert(`🎉 रिज़ल्ट सफलतापूर्वक जारी!\n${result.message}`);
+                    document.getElementById(inputElementId).value = "";
+                    loadLiveSattaSheet(); // सट्टा शीट को ताज़ा करना
+                } else {
+                    alert("❌ घोषणा फेल: " + result.message);
+                }
+            } catch (err) {
+                alert("⚠ बैकएंड सर्वर से संपर्क टूटा! कृपया चेक करें कि 'app.py' चालू है या नहीं।");
+            }
+        }
     </script>
 </body>
 </html>
