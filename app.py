@@ -101,11 +101,41 @@ def get_dashboard_data():
 @app.route('/api/game-status', methods=['GET'])
 def get_game_status():
     try:
-        current_time = datetime.now(IST).strftime("%H:%M")
-        if "16:40" <= current_time < "17:00":
-            return jsonify({"status": "closed", "message": "Betting Closed"}), 200
-        return jsonify({"status": "open", "message": "Betting Live"}), 200
-    except Exception as e: return jsonify({"status": "error"}), 500
+        #        ( Gali, Disawer)
+        market_name = request.args.get('market', 'Faridabad').strip()
+        now_ist = datetime.now(IST)
+        current_time = now_ist.strftime("%H:%M")
+        
+        #  8          
+        market_timings = {
+            "Faridabad": {"lock": "17:40", "result": "18:00"},
+            "Ghaziabad": {"lock": "20:10", "result": "20:30"},
+            "Gali":      {"lock": "23:10", "result": "23:30"},
+            "Disawer":   {"lock": "04:40", "result": "05:00"},
+            "Market05":  {"lock": "13:40", "result": "14:00"},
+            "Market06":  {"lock": "15:40", "result": "16:00"},
+            "Market07":  {"lock": "18:40", "result": "19:00"},
+            "Market08":  {"lock": "21:40", "result": "22:00"}
+        }
+        
+        timing = market_timings.get(market_name, {"lock": "17:40", "result": "18:00"})
+        
+        #       ,       
+        if timing["lock"] <= current_time < timing["result"]:
+            return jsonify({
+                "status": "closed",
+                "message": f"Betting Closed for {market_name}. Waiting for Result...",
+                "server_time": current_time
+            }), 200
+        else:
+            return jsonify({
+                "status": "open",
+                "message": f"Betting is Live for {market_name}!",
+                "server_time": current_time
+            }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+        
 
 #  6.       
 @app.route('/api/place-bet', methods=['POST'])
@@ -176,27 +206,45 @@ def declare_result():
     try:
         data = request.json or {}
         winning_number = data.get('winning_number')
-        round_id = data.get('round_id', 'DAILY_FARIDABAD')
+        #         ( DAILY_GALI, DAILY_DISAWER, DAILY_FARIDABAD)
+        round_id = data.get('round_id', 'DAILY_FARIDABAD').upper()
 
+        #       ,      -   
         if not winning_number:
             sheet_data = {str(i): 0 for i in range(1, 101)}
+            #      PENDING    
             active_bets = list(db.bets.find({"status": "PENDING", "round_id": round_id}))
+            
             for bet in active_bets:
                 amt = int(bet.get('amount_per_number', 0))
                 for num in bet.get('numbers', []):
-                    if str(num) in sheet_data: sheet_data[str(num)] += amt
+                    if str(num) in sheet_data:
+                        sheet_data[str(num)] += amt
 
+            #     0     (100%   )
             zero_money_numbers = [num for num, amt in sheet_data.items() if amt == 0]
-            if zero_money_numbers: winning_number = int(zero_money_numbers)
-            else: winning_number = int(min(sheet_data, key=sheet_data.get))
+            if zero_money_numbers:
+                winning_number = int(zero_money_numbers[0])  #  0   
+            else:
+                #         (Absolute Lowest Pool)   
+                winning_number = int(min(sheet_data, key=sheet_data.get))
         else:
             winning_number = int(winning_number)
 
-        db.results.insert_one({"winning_number": winning_number, "round_id": round_id, "declared_at": datetime.now(IST)})
+        #   'results'     
+        db.results.insert_one({
+            "winning_number": winning_number,
+            "round_id": round_id,
+            "declared_at": datetime.now(IST)
+        })
 
+        #        95x   
         active_bets = list(db.bets.find({"status": "PENDING", "round_id": round_id}))
         for bet in active_bets:
-            user_id, numbers, amount_per_num = bet.get('user_id'), bet.get('numbers', []), int(bet.get('amount_per_number', 0))
+            user_id = bet.get('user_id')
+            numbers = bet.get('numbers', [])
+            amount_per_num = int(bet.get('amount_per_number', 0))
+
             if winning_number in numbers:
                 payout = amount_per_num * 95
                 db.users.update_one({"mobile": user_id}, {"$inc": {"balance": payout}})
@@ -204,9 +252,13 @@ def declare_result():
             else:
                 db.bets.update_one({"_id": bet["_id"]}, {"$set": {"status": "LOSE", "payout": 0}})
 
-        return jsonify({"status": "success", "message": f"Result {winning_number} declared"}), 200
+        return jsonify({
+            "status": "success",
+            "message": f"Result {winning_number} successfully declared for {round_id} and 95x payouts distributed!"
+        }), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+        
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
