@@ -80,40 +80,20 @@ def login_user():
     if not user:
         return jsonify({"success": False, "message": "User not found"}), 401
 
-    if user.get('password') == password:
-        update_data = {}
-        
-        if not user.get('name'):
-            full_name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
-            update_data['name'] = full_name if full_name else "Arena User"
-            
-        if user.get('status') != 'active':
-            update_data['status'] = 'active'
-            
-        if user.get('balance') is None:
-            update_data['balance'] = 0
-
-        if update_data:
-            db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
-
-        return jsonify({
-            "success": True,
-            "status": "success",
-            "message": "Login successful",
-            "user_mobile": user.get('mobile'),
-            "user_name": user.get('name') or update_data.get('name', 'Arena User')
-        }), 200
-    else:
+    if user.get('password') != password:
         return jsonify({"success": False, "status": "error", "message": "Invalid password"}), 401
+
+    update_data = {}
+    if not user.get('name'):
+        full_name = f"{user.get('firstName', '')} {user.get('lastName', '')}".strip()
+        update_data['name'] = full_name if full_name else "Arena User"
         
-        # 2. अगर यूज़र इनएक्टिव या स्टेटस गायब है, तो उसे ऑटोमैटिक 'active' करें
-        if user.get('status') != 'active':
-            update_data['status'] = 'active'
-            
-        # 3. अगर नए वॉलेट का बैलेंस गायब है, तो डिफ़ॉल्ट रूप से ₹0 या ₹50 सेट करें
-        if user.get('balance') is None:
-            update_data['balance'] = 0
-            
+    if user.get('status') != 'active':
+        update_data['status'] = 'active'
+        
+    if user.get('balance') is None:
+        update_data['balance'] = 0
+
     if update_data:
         db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
 
