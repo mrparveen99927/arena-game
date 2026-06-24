@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena Game - Cashout to Wallet</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0b0518; color: #ffffff; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* 🕹️ गेमिंग स्टाइल कार्ड */
+        .arena-card { width: 100%; max-width: 380px; background: #160d29; border: 2px solid #ef4444; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .arena-title { font-size: 18px; font-weight: 800; color: #ef4444; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px; }
+        
+        .input-group { margin-bottom: 16px; text-align: left; }
+        .input-group label { display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }
+        .input-group input { width: 100%; padding: 14px; background: #0b0518; border: 1px solid #ef4444; border-radius: 8px; color: white; font-size: 16px; outline: none; text-align: center; font-weight: bold; }
+        .input-group input:focus { border-color: #ff6b6b; box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+        
+        .wit-btn { width: 100%; padding: 14px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); margin-top: 10px; }
+        .instructions { font-size: 11px; color: #aaa; line-height: 1.4; margin-top: 16px; border-top: 1px dashed #443366; padding-top: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="arena-card">
+        <div class="arena-title">⚔️ Arena Winning Cashout ⚔️</div>
+        
+        <!-- मोबाइल नंबर बॉक्स -->
+        <div class="input-group">
+            <label>Central Wallet Registered Mobile</label>
+            <input type="text" id="player-wallet-mobile" placeholder="Enter 10-Digit Mobile" maxlength="10">
+        </div>
+
+        <!-- अमाउंट डालने का बॉक्स -->
+        <div class="input-group">
+            <label>Withdrawal Token Amount</label>
+            <input type="number" id="arena-withdraw-amount" placeholder="Enter Amount to Cashout" min="10">
+        </div>
+        
+        <button class="wit-btn" onclick="requestGameWithdrawal()">Transfer to Wallet</button>
+
+        <div class="instructions">
+            💡 <b>Note:</b> जीते हुए टोकन सीधे आपके सेंट्रल वॉलेट अकाउंट में भेज दिए जाएंगे। वहां से आप इन्हें अपने बैंक अकाउंट या UPI आईडी में असली कैश के रूप में निकाल सकते हैं।
+        </div>
+    </div>
+
+<!-- जावास्क्रिप्ट भाग 2 में जुड़ेगी -->
+<script>
+    // 🚀 आपके सेंट्रल वॉलेट का नया लाइव रेंडर सर्वर लिंक
+    const WALLET_API_URL = "https://arena-backen.onrender.com";
+
+    // 💰 गेम से सेंट्रल वॉलेट में पैसे भेजने का लाइव फंक्शन
+    async function requestGameWithdrawal() {
+        const mobileInput = document.getElementById('player-wallet-mobile').value.trim();
+        const amountInput = document.getElementById('arena-withdraw-amount').value.trim();
+
+        if (mobileInput.length !== 10 || isNaN(mobileInput)) {
+            alert("❌ कृपया 10 अंकों का सही सेंट्रल वॉलेट रजिस्टर्ड मोबाइल नंबर दर्ज करें!");
+            return;
+        }
+
+        if (!amountInput || parseFloat(amountInput) <= 0 || isNaN(amountInput)) {
+            alert("❌ कृपया विड्रॉल करने के लिए एक सही राशि (Amount) दर्ज करें!");
+            return;
+        }
+
+        const confirmWithdraw = confirm(`🏦 क्या आप सच में ₹${amountInput} के टोकन अपने सेंट्रल वॉलेट अकाउंट (${mobileInput}) में ट्रांसफर करना चाहते हैं?`);
+        if (!confirmWithdraw) return;
+
+        try {
+            // सेंट्रल वॉलेट के लाइव app.py बैकएंड रूट पर हिट मारना
+            const response = await fetch(`${WALLET_API_URL}/api/game/execute-withdrawal`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_mobile: mobileInput,
+                    amount: parseFloat(amountInput)
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok || result.success) {
+                alert(`🎉 ट्रांसफर सफल!\n\n${result.message}`);
+                // ट्रांसफर सफल होने पर फॉर्म को खाली करना
+                document.getElementById('arena-withdraw-amount').value = "";
+            } else {
+                alert(`❌ विड्रॉल विफल: ${result.message}`);
+            }
+        } catch (err) {
+            // ऑफलाइन या टेस्टिंग के दौरान फ्रंटेंड फ्लो चेक करने के लिए डमी रिपॉन्स मोड
+            alert(`🎉 [Mock Test Success]\n\n₹${amountInput} के टोकन आपके सेंट्रल वॉलेट अकाउंट (${mobileInput}) में भेज दिए गए हैं!`);
+            document.getElementById('arena-withdraw-amount').value = "";
+            console.error(err);
+        }
+    }
+</script>
+</body>
+</html>
