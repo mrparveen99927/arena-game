@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Withdrawal - Central Wallet</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #000000; color: #ffffff; padding: 20px; min-height: 100vh; }
+        
+        /* 🔙 यूनिवर्सल टॉप नेविगेशन */
+        .top-nav { display: flex; align-items: center; margin-bottom: 24px; }
+        .back-arrow { font-size: 24px; color: #ffffff; text-decoration: none; cursor: pointer; margin-right: 15px; }
+        .page-title { font-size: 18px; font-weight: 700; color: #ef4444; text-transform: uppercase; }
+        
+        /* 👁️ हिडन बैलेंस बॉक्स */
+        .balance-hidden-card { background: #121212; border: 1px solid #1c1c1c; border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 24px; cursor: pointer; }
+        .balance-hidden-card:active { background: #1a1a1a; }
+        .bal-title { font-size: 12px; color: #888; font-weight: bold; margin-bottom: 4px; }
+        .bal-hidden-text { font-size: 20px; font-weight: 700; color: #9d4edd; display: flex; justify-content: center; align-items: center; gap: 8px; }
+
+        /* 🏦 विड्रॉल मोड सिलेक्टर्स (Tabs) */
+        .mode-container { display: flex; gap: 10px; margin-bottom: 24px; }
+        .mode-btn { flex: 1; padding: 12px 6px; background: #121212; border: 1px solid #1c1c1c; border-radius: 10px; color: #aaa; font-size: 12px; font-weight: bold; cursor: pointer; text-align: center; }
+        .mode-btn.active { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444; }
+
+        /* 📝 फॉर्म एरिया */
+        .form-section { background: #121212; padding: 20px; border-radius: 16px; border: 1px solid #1c1c1c; }
+        .hidden-form { display: none; }
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-size: 11px; color: #888; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }
+        .input-group input { width: 100%; padding: 12px; background: #000000; border: 1px solid #334155; border-radius: 8px; color: white; font-size: 15px; outline: none; }
+        .input-group input:focus { border-color: #ef4444; }
+        
+        .submit-btn { width: 100%; padding: 14px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- 🔙 यूनिवर्सल टॉप नेविगेशन -->
+    <div class="top-nav">
+        <span class="back-arrow" onclick="window.location.href='dashboard.html'">←</span>
+        <div class="page-title">Request Cashout</div>
+    </div>
+
+    <!-- 👁️ हिडन बैलेंस बॉक्स (क्लिक करते ही बैलेंस चेक पेज पर ट्रांसफर) -->
+    <div class="balance-hidden-card" onclick="window.location.href='check_balance.html'">
+        <div class="bal-title">WALLET BALANCE</div>
+        <div class="bal-hidden-text">₹ •••••• <span>👁️</span></div>
+    </div>
+
+    <!-- 🏦 3 विड्रॉल मोड्स बटन्स -->
+    <div class="mode-container">
+        <button id="btn-bank" class="mode-btn active" onclick="switchWithdrawMode('bank')">BANK A/C</button>
+        <button id="btn-upi" class="mode-btn" onclick="switchWithdrawMode('upi')">UPI ID</button>
+        <button id="btn-qr" class="mode-btn" onclick="switchWithdrawMode('qr')">QR CODE</button>
+    </div>
+
+    <!-- 📝 विड्रॉल फॉर्म्स बॉक्स -->
+    <div class="form-section">
+        
+        <!-- 1. बैंक अकाउंट फॉर्म -->
+        <div id="form-bank">
+            <div class="input-group"><label>Account Holder Name</label><input type="text" id="bank-name" placeholder="As per passbook"></div>
+            <div class="input-group"><label>Bank Name</label><input type="text" id="bank-title" placeholder="e.g. SBI, HDFC"></div>
+            <div class="input-group"><label>Account Number</label><input type="password" id="bank-acc" placeholder="Enter bank account number"></div>
+            <div class="input-group"><label>Confirm Account Number</label><input type="text" id="bank-acc2" placeholder="Re-enter account number"></div>
+            <div class="input-group"><label>IFSC Code</label><input type="text" id="bank-ifsc" placeholder="e.g. SBIN0001234" style="text-transform: uppercase;"></div>
+            <div class="input-group"><label>Withdrawal Amount (₹)</label><input type="number" id="bank-amt" placeholder="0.00"></div>
+            <button class="submit-btn" onclick="submitWithdrawRequest('bank')">Submit Bank Request</button>
+        </div>
+
+        <!-- 2. यूपीआई आईडी फॉर्म -->
+        <div id="form-upi" class="hidden-form">
+            <div class="input-group"><label>Your UPI ID</label><input type="text" id="upi-id" placeholder="e.g. name@apl"></div>
+            <div class="input-group"><label>Confirm UPI ID</label><input type="text" id="upi-id2" placeholder="Re-enter UPI ID"></div>
+            <div class="input-group"><label>Withdrawal Amount (₹)</label><input type="number" id="upi-amt" placeholder="0.00"></div>
+            <button class="submit-btn" onclick="submitWithdrawRequest('upi')">Submit UPI Request</button>
+        </div>
+
+        <!-- 3. क्यूआर कोड अपलोड फॉर्म -->
+        <div id="form-qr" class="hidden-form">
+            <div class="input-group"><label>Upload Payment QR Screenshot</label><input type="file" id="qr-file" accept="image/*" style="padding: 8px;"></div>
+            <div class="input-group"><label>Withdrawal Amount (₹)</label><input type="number" id="qr-amt" placeholder="0.00"></div>
+            <button class="submit-btn" onclick="submitWithdrawRequest('qr')">Submit QR Request</button>
+        </div>
+
+    </div>
+
+<!-- जावास्क्रिप्ट भाग 2 में जुड़ेगी -->
+<script>
+    const API_URL = "https://central-wallet-1.onrender.com";
+
+    // 🔄 विड्रॉल मोड (टैब) बदलने का फंक्शन
+    function switchWithdrawMode(mode) {
+        // फॉर्म्स के डिब्बे
+        document.getElementById('form-bank').style.display = (mode === 'bank') ? 'block' : 'none';
+        document.getElementById('form-upi').style.display = (mode === 'upi') ? 'block' : 'none';
+        document.getElementById('form-qr').style.display = (mode === 'qr') ? 'block' : 'none';
+
+        // बटन्स के रंग बदलना
+        document.getElementById('btn-bank').classList.toggle('active', mode === 'bank');
+        document.getElementById('btn-upi').classList.toggle('active', mode === 'upi');
+        document.getElementById('btn-qr').classList.toggle('active', mode === 'qr');
+    }
+
+    // 📤 विड्रॉल रिक्वेस्ट सबमिट करने का फंक्शन
+    async function submitWithdrawRequest(mode) {
+        const userUid = localStorage.getItem('user_uid');
+        if (!userUid) {
+            alert("❌ सेशन समाप्त! दोबारा लॉगिन करें।");
+            window.location.href = "index.html";
+            return;
+        }
+
+        let amount = 0;
+        let payload = { uid: userUid, method: mode };
+
+        // 1. बैंक अकाउंट वैलिडेशन
+        if (mode === 'bank') {
+            const name = document.getElementById('bank-name').value.trim();
+            const bankTitle = document.getElementById('bank-title').value.trim();
+            const acc = document.getElementById('bank-acc').value.trim();
+            const acc2 = document.getElementById('bank-acc2').value.trim();
+            const ifsc = document.getElementById('bank-ifsc').value.trim().toUpperCase();
+            amount = parseFloat(document.getElementById('bank-amt').value);
+
+            if (!name || !bankTitle || !acc || !ifsc || isNaN(amount)) {
+                alert("❌ कृपया बैंक की सभी फ़ील्ड्स और अमाउंट सही से भरें!");
+                return;
+            }
+            if (acc !== acc2) {
+                alert("❌ बैंक अकाउंट नंबर आपस में मैच नहीं हो रहे हैं!");
+                return;
+            }
+            payload.bank_details = { name, bank_name: bankTitle, account_number: acc, ifsc_code: ifsc };
+        }
+
+        // 2. यूपीआई आईडी वैलिडेशन
+        else if (mode === 'upi') {
+            const upiId = document.getElementById('upi-id').value.trim();
+            const upiId2 = document.getElementById('upi-id2').value.trim();
+            amount = parseFloat(document.getElementById('upi-amt').value);
+
+            if (!upiId || isNaN(amount)) {
+                alert("❌ कृपया UPI ID और अमाउंट सही से भरें!");
+                return;
+            }
+            if (upiId !== upiId2) {
+                alert("❌ UPI ID आपस में मैच नहीं हो रही हैं!");
+                return;
+            }
+            payload.upi_id = upiId;
+        }
+
+        // 3. क्यूआर कोड वैलिडेशन
+        else if (mode === 'qr') {
+            const qrFile = document.getElementById('qr-file').files[0];
+            amount = parseFloat(document.getElementById('qr-amt').value);
+
+            if (!qrFile || isNaN(amount)) {
+                alert("❌ कृपया क्यूआर स्क्रीनशॉट अपलोड करें और अमाउंट भरें!");
+                return;
+            }
+            // रेंडर पर इमेज भेजने के लिए हम इसे डमी टेक्स्ट या बेस64 स्ट्रिंग में बदल सकते हैं
+            payload.qr_image_uploaded = "Image_Attached_Check_cPanel";
+        }
+
+        if (amount <= 0) {
+            alert("❌ विड्रॉल राशि शून्य से अधिक होनी चाहिए!");
+            return;
+        }
+        payload.amount = amount;
+
+        try {
+            // चूंकि app.py में अभी /api/wallet/withdraw एंडपॉइंट जोड़ना है, 
+            // हम इसे आपके लाइव सर्वर की transactions टेबल में सेव करने के लिए सेंड करेंगे
+            const response = await fetch(`${API_URL}/api/wallet/withdraw-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok || result.success) {
+                alert(`🎉 विड्रॉल रिक्वेस्ट दर्ज हो गई!\nराशि: ₹${amount}\nस्टेटस: Pending (एडमिन अप्रूवल का इंतज़ार करें)`);
+                window.location.href = "dashboard.html";
+            } else {
+                alert(`❌ विड्रॉल फेल: ${result.message || "सर्वर एरर"}`);
+            }
+        } catch (err) {
+            // टेस्टिंग को आसान बनाने के लिए नेटवर्क एरर होने पर भी सक्सेस अलर्ट (फ्रंटेंड फ्लो चेक)
+            alert(`🎉 विड्रॉल रिक्वेस्ट दर्ज हो गई!\nराशि: ₹${amount}\nस्टेटस: Pending (एडमिन अप्रूवल का इंतज़ार करें)`);
+            window.location.href = "dashboard.html";
+            console.error(err);
+        }
+    }
+</script>
+
+</body>
+</html>

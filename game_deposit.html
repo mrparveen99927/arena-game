@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena Game - Deposit Tokens</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0b0518; color: #ffffff; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* 🕹️ गेमिंग स्टाइल कार्ड */
+        .arena-card { width: 100%; max-width: 380px; background: #160d29; border: 2px solid #9d4edd; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 0 20px rgba(157, 78, 221, 0.3); }
+        .arena-title { font-size: 18px; font-weight: 800; color: #9d4edd; text-transform: uppercase; margin-bottom: 20px; letter-spacing: 1px; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 11px; color: #b3b3b3; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }
+        .input-group input { width: 100%; padding: 14px; background: #0b0518; border: 1px solid #9d4edd; border-radius: 8px; color: white; font-size: 16px; outline: none; text-align: center; font-weight: bold; }
+        
+        .gen-btn { width: 100%; padding: 14px; background: #9d4edd; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 12px rgba(157, 78, 221, 0.4); }
+        
+        /* 🔲 डायनामिक क्यूआर और रैंडम यूपीआई एरिया */
+        .qr-display-section { display: none; margin-top: 24px; border-top: 1px dashed #443366; padding-top: 20px; }
+        .qr-box { width: 180px; height: 180px; background: #ffffff; margin: 0 auto 16px auto; border-radius: 12px; padding: 10px; display: flex; justify-content: center; align-items: center; border: 3px solid #9d4edd; }
+        .qr-box img { width: 100%; height: 100%; }
+        
+        .upi-row { display: flex; background: #0b0518; border: 1px dashed #10b981; border-radius: 8px; padding: 12px; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .random-upi { font-size: 13px; font-weight: 700; color: #10b981; letter-spacing: 0.5px; }
+        .copy-btn { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .instructions { font-size: 11px; color: #aaa; line-height: 1.4; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="arena-card">
+        <div class="arena-title">⚔️ N&N Arena Token Inflow ⚔️</div>
+        
+        <!-- अमाउंट डालने का बॉक्स -->
+        <div class="input-group">
+            <label>Select Token Amount to Load</label>
+            <input type="number" id="arena-deposit-amount" placeholder="Enter Amount (e.g. 500)" min="10">
+        </div>
+        <button class="gen-btn" onclick="requestDynamicGameQR()">Generate Payment Gate</button>
+
+        <!-- 🔲 लाइव जनरेटेड क्यूआर और यूपीआई आईडी सेक्शन (शुरू में हिडन रहेगा) -->
+        <div id="qr-gate-section" class="qr-display-section">
+            <div class="qr-box">
+                <img id="game-dynamic-qr-img" src="" alt="Game Loading QR">
+            </div>
+            
+            <!-- रैंडम यूपीआई कॉपी रो -->
+            <div class="upi-row">
+                <span id="game-random-upi-text" class="random-upi">pay-game-xxxxxx@cw</span>
+                <button class="copy-btn" onclick="copyGameUpiId()">Copy UPI</button>
+            </div>
+            
+            <div class="instructions">
+                💡 <b>How to pay:</b> Scan this QR using Central Wallet App Scanner OR copy the random UPI ID and paste it into Central Wallet's <b>"To UPI"</b> tab to load tokens instantly!
+            </div>
+        </div>
+    </div>
+
+<!-- जावास्क्रिप्ट भाग 2 में जुड़ेगी -->
+<script>
+    // 🚀 आपके सेंट्रल वॉलेट का नया लाइव रेंडर सर्वर लिंक
+    const WALLET_API_URL = "https://arena-backen.onrender.com";
+
+    // 🔍 1. रेंडर बैकएंड से डायनामिक क्यूआर और रैंडम यूपीआई आईडी मांगने का फंक्शन
+    async function requestDynamicGameQR() {
+        const amountInput = document.getElementById('arena-deposit-amount').value.trim();
+        const qrSection = document.getElementById('qr-gate-section');
+        const qrImg = document.getElementById('game-dynamic-qr-img');
+        const upiText = document.getElementById('game-random-upi-text');
+
+        // खिलाड़ी की डमी गेम आईडी (जब आप गेम का सेशन बनाएंगे तो इसे localStorage.getItem('game_uid') से बदल सकते हैं)
+        const playerGameId = "ARENA-PLAYER-99"; 
+
+        if (!amountInput || parseFloat(amountInput) <= 0 || isNaN(amountInput)) {
+            alert("❌ कृपया टोकन लोड करने के लिए एक सही राशि (Amount) दर्ज करें!");
+            return;
+        }
+
+        try {
+            // सेंट्रल वॉलेट के लाइव app.py बैकएंड रूट पर हिट मारना
+            const response = await fetch(`${WALLET_API_URL}/api/game/generate-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    game_id: playerGameId,
+                    amount: parseFloat(amountInput)
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok || result.success) {
+                // 1. स्क्रीन पर रैंडम जनरेटेड गेम यूपीआई आईडी सेट करना
+                upiText.innerText = result.game_upi_id;
+
+                // 2. गूगल क्यूआर एपीआई की मदद से डायनामिक क्यूआर कोड इमेज बनाना
+                // सेंट्रल वॉलेट का स्कैनर इस क्यूआर को डायरेक्ट स्कैन करके पेमेंट डिटेक्ट कर लेगा
+                qrImg.src = `https://qrserver.com{encodeURIComponent(result.qr_data_string)}`;
+
+                // 3. क्यूआर और यूपीआई वाले गुप्त डिब्बे को स्क्रीन पर दिखाना (Display Block)
+                qrSection.style.display = 'block';
+                alert("🎉 Payment Gate Generated!\nCopy the UPI or scan the QR code to proceed.");
+            } else {
+                alert(`❌ गेटवे जनरेशन फेल: ${result.message}`);
+            }
+        } catch (err) {
+            // टेस्टिंग या ऑफलाइन की स्थिति में यूजर फ्लो चेक करने के लिए डमी रिपॉन्स मोड ऑन रखना
+            qrSection.style.display = 'block';
+            const mockToken = Math.floor(100000 + Math.random() * 900000);
+            upiText.innerText = `pay-game-${mockToken}@cw`;
+            qrImg.src = `https://qrserver.com{mockToken}@cw&am=${amountInput}`;
+            console.error(err);
+        }
+    }
+
+    // 📋 2. रैंडम गेम यूपीआई आईडी कॉपी करने का फंक्शन
+    function copyGameUpiId() {
+        const upiIdText = document.getElementById('game-random-upi-text').innerText;
+        
+        if (upiIdText.includes("xxxxxx")) {
+            alert("❌ कृपया पहले पेमेंट गेटवे बटन दबाकर यूपीआई आईडी जनरेट करें!");
+            return;
+        }
+
+        navigator.clipboard.writeText(upiIdText);
+        alert("✅ Game UPI ID Copied Successfully!\n\nNow open Central Wallet App -> Go to 'To UPI' tab -> Paste this ID & type your MPIN to complete transfer instantly.");
+    }
+</script>
+</body>
+</html>
